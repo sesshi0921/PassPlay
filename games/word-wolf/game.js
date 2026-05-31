@@ -111,20 +111,19 @@
   function renderReveal() {
     const name = state.players[state.revealIndex];
     document.getElementById('reveal-name').textContent = name;
-    const $show = document.getElementById('btn-reveal-show');
-    const $wordBox = document.getElementById('reveal-word-box');
-    const $done = document.getElementById('btn-reveal-done');
-    $show.hidden = false;
-    $wordBox.hidden = true;
-    $done.hidden = true;
+    const $card = document.getElementById('reveal-card');
+    $card.dataset.state = 'hidden';
+    document.getElementById('reveal-word').textContent = '';
+    document.getElementById('btn-reveal-done').hidden = true;
     show('reveal');
   }
 
   function revealShow() {
+    const $card = document.getElementById('reveal-card');
+    if ($card.dataset.state === 'shown') return;
     const word = state.revealIndex === state.wolfIndex ? state.pair.wolf : state.pair.majority;
     document.getElementById('reveal-word').textContent = word;
-    document.getElementById('btn-reveal-show').hidden = true;
-    document.getElementById('reveal-word-box').hidden = false;
+    $card.dataset.state = 'shown';
     document.getElementById('btn-reveal-done').hidden = false;
   }
 
@@ -268,7 +267,7 @@
       else show(next);
     });
 
-    document.getElementById('btn-reveal-show').addEventListener('click', revealShow);
+    document.getElementById('reveal-card').addEventListener('click', revealShow);
     document.getElementById('btn-reveal-done').addEventListener('click', revealNext);
 
     document.querySelectorAll('.time-btn').forEach(b => {

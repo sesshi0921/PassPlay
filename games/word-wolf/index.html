@@ -28,14 +28,16 @@
     <button id="btn-pass-next" class="btn btn-primary">準備OK・タップして進む</button>
   </section>
 
-  <!-- reveal: 単語表示 -->
+  <!-- reveal: 単語表示（タップ前後を1ブロックに統合） -->
   <section class="phase" data-phase="reveal" hidden>
     <p class="reveal-sub"><span id="reveal-name"></span> さん</p>
-    <button id="btn-reveal-show" class="word-card word-card-hidden">タップして<br>あなたの単語を見る</button>
-    <div id="reveal-word-box" class="word-card word-card-shown" hidden>
-      <div class="word-label">あなたの単語</div>
-      <div id="reveal-word" class="word-text"></div>
-    </div>
+    <button id="reveal-card" class="word-card" type="button" data-state="hidden">
+      <span class="card-prompt">タップして<br>あなたの単語を見る</span>
+      <span class="card-shown">
+        <span class="word-label">あなたの単語</span>
+        <span id="reveal-word" class="word-text"></span>
+      </span>
+    </button>
     <button id="btn-reveal-done" class="btn btn-primary" hidden>確認した・次へ</button>
   </section>
 

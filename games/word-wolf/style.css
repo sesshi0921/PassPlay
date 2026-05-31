@@ -178,16 +178,26 @@ body {
   border: 2px solid var(--accent);
   cursor: pointer;
   padding: 16px;
+  font-family: inherit;
+  text-align: center;
 }
-button.word-card { border: 2px solid var(--accent); }
-.word-card-hidden {
+.word-card[data-state="hidden"] {
   background: var(--card-2);
   color: var(--text-soft);
   font-size: 16px;
   line-height: 1.5;
 }
-.word-card-shown {
+.word-card[data-state="shown"] {
   background: var(--card);
+  cursor: default;
+}
+.word-card[data-state="hidden"] .card-shown { display: none; }
+.word-card[data-state="shown"] .card-prompt { display: none; }
+.card-shown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 .word-label {
   font-size: 12px;
@@ -203,6 +213,9 @@ button.word-card { border: 2px solid var(--accent); }
   word-break: break-all;
   line-height: 1.2;
 }
+
+/* hidden 属性を flex/grid 等で上書きされないよう確実に適用 */
+[hidden] { display: none !important; }
 
 /* timer-setup */
 .time-options {
