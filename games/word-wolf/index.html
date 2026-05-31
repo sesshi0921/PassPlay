@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>ワードウルフ | PassPlay</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- setup -->
+  <section class="phase" data-phase="setup" hidden>
+    <h1 class="title">ワードウルフ</h1>
+    <p class="lead">他の人と違う単語が配られた「人狼」を見つけ出すゲーム</p>
+    <div id="setup-players" class="info-box"></div>
+    <div class="actions">
+      <button id="btn-start" class="btn btn-primary">ゲームを始める</button>
+      <a class="btn btn-ghost" href="../../index.html">トップへ戻る</a>
+    </div>
+  </section>
+
+  <!-- pass: 端末を次の人へ -->
+  <section class="phase" data-phase="pass" hidden>
+    <p class="pass-sub">次のプレーヤーに端末を渡してください</p>
+    <h2 id="pass-name" class="pass-name"></h2>
+    <button id="btn-pass-next" class="btn btn-primary">準備OK・タップして進む</button>
+  </section>
+
+  <!-- reveal: 単語表示 -->
+  <section class="phase" data-phase="reveal" hidden>
+    <p class="reveal-sub"><span id="reveal-name"></span> さん</p>
+    <button id="btn-reveal-show" class="word-card word-card-hidden">タップして<br>あなたの単語を見る</button>
+    <div id="reveal-word-box" class="word-card word-card-shown" hidden>
+      <div class="word-label">あなたの単語</div>
+      <div id="reveal-word" class="word-text"></div>
+    </div>
+    <button id="btn-reveal-done" class="btn btn-primary" hidden>確認した・次へ</button>
+  </section>
+
+  <!-- timer-setup -->
+  <section class="phase" data-phase="timer-setup" hidden>
+    <h2 class="title">議論時間を選ぼう</h2>
+    <p class="lead">全員で話し合って、人狼を当てよう</p>
+    <div class="time-options">
+      <button class="time-btn" data-min="1">1 分</button>
+      <button class="time-btn" data-min="3">3 分</button>
+      <button class="time-btn" data-min="5">5 分</button>
+    </div>
+    <div class="time-custom">
+      <label for="custom-min">自由入力（分）</label>
+      <div class="time-custom-row">
+        <input id="custom-min" type="number" min="1" max="30" step="1" inputmode="numeric" placeholder="例: 2">
+        <button id="btn-custom-start" class="btn btn-accent">この時間で開始</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- discuss -->
+  <section class="phase" data-phase="discuss" hidden>
+    <h2 class="title">議論タイム</h2>
+    <div id="timer-display" class="timer">00:00</div>
+    <p class="lead">時間内に人狼を見つけよう</p>
+    <button id="btn-to-vote" class="btn btn-primary">投票へ進む</button>
+  </section>
+
+  <!-- vote -->
+  <section class="phase" data-phase="vote" hidden>
+    <p class="vote-sub"><span id="vote-name"></span> さんの投票</p>
+    <p class="lead">怪しいと思う人を1人選んでください</p>
+    <ul id="vote-list" class="vote-list"></ul>
+  </section>
+
+  <!-- result -->
+  <section class="phase" data-phase="result" hidden>
+    <h2 class="title">結果発表</h2>
+    <div id="result-body" class="result-body"></div>
+    <div class="actions">
+      <button id="btn-again" class="btn btn-primary">もう一度</button>
+      <a class="btn btn-ghost" href="../../index.html">トップへ戻る</a>
+    </div>
+  </section>
+
+</div>
+<script src="./game.js"></script>
+</body>
+</html>

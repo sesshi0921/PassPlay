@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>PassPlay</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <h1>PassPlay</h1>
+    <p class="subtitle">パスして遊ぶみんなのゲーム</p>
+  </header>
+
+  <section class="games-section">
+    <h2 class="section-title">ゲーム</h2>
+    <div id="games-grid" class="games-grid" aria-live="polite"></div>
+  </section>
+
+  <section class="players-section">
+    <h2 class="section-title">プレーヤー <span id="players-count" class="count">0</span></h2>
+    <form id="player-form" class="player-form" autocomplete="off">
+      <input id="player-input" class="player-input" type="text" placeholder="名前を入力" maxlength="16" required>
+      <button class="btn-add" type="submit">追加</button>
+    </form>
+    <ul id="players-list" class="players-list"></ul>
+  </section>
+</div>
+
+<script src="./app.js"></script>
+</body>
+</html>
