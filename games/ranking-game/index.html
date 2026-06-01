@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>順位ゲーム | PassPlay</title>
+<title>価値観ゲーム | PassPlay</title>
 <link rel="stylesheet" href="./style.css">
 </head>
 <body>
@@ -12,7 +12,7 @@
 
   <!-- setup -->
   <section class="phase" data-phase="setup" hidden>
-    <h1 class="title">順位ゲーム</h1>
+    <h1 class="title">価値観ゲーム</h1>
     <p class="lead">隠された数字の順位を当てるゲーム</p>
     <div id="setup-players" class="info-box"></div>
     <div class="actions">
@@ -52,6 +52,15 @@
       <button type="submit" class="btn btn-primary">提案する</button>
     </form>
     <div id="propose-list" class="propose-list"></div>
+  </section>
+
+  <!-- judge -->
+  <section class="phase" data-phase="judge" hidden>
+    <h2 class="title">順位を当てよう！</h2>
+    <p class="lead">スコアが高いと思う順にタップ</p>
+    <div id="judge-btns" class="judge-btns"></div>
+    <div id="judge-order" class="judge-order"></div>
+    <button id="btn-judge-confirm" class="btn btn-primary" hidden>確定する</button>
   </section>
 
   <!-- result -->

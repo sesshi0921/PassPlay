@@ -20,6 +20,7 @@
     currentProposeIdx: 0,
     theme: '',
     proposals: {},
+    judgeOrder: [],
   };
 
   const phases = Array.from(document.querySelectorAll('[data-phase]'));
@@ -80,20 +81,16 @@
     document.getElementById('dist-name').textContent = player;
     const distReveal = document.getElementById('dist-reveal');
     const distValue = document.getElementById('dist-value');
-    const distPrompt = distReveal.querySelector('.dist-prompt');
     distReveal.classList.remove('revealed');
-    distPrompt.hidden = false;
-    distValue.hidden = true;
+    distValue.textContent = state.scores[player];
     distReveal.onclick = () => {
-      distPrompt.hidden = true;
-      distValue.hidden = false;
       distReveal.classList.add('revealed');
     };
   }
 
   function showPropose() {
     if (state.currentProposeIdx >= state.players.length) {
-      judgeResults();
+      showJudge();
       return;
     }
     const player = state.players[state.currentProposeIdx];
@@ -114,13 +111,47 @@
     });
   }
 
+  function showJudge() {
+    state.judgeOrder = [];
+    const shuffled = [...state.players].sort(() => Math.random() - 0.5);
+    const btnsEl = document.getElementById('judge-btns');
+    const orderEl = document.getElementById('judge-order');
+    const confirmBtn = document.getElementById('btn-judge-confirm');
+    btnsEl.innerHTML = '';
+    orderEl.innerHTML = '';
+    confirmBtn.hidden = true;
+    shuffled.forEach(player => {
+      const btn = document.createElement('button');
+      btn.className = 'judge-player-btn';
+      btn.textContent = `${player}：${state.proposals[player] || '?'}`;
+      btn.dataset.player = player;
+      btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        btn.disabled = true;
+        btn.classList.add('selected');
+        state.judgeOrder.push(player);
+        const num = document.createElement('span');
+        num.className = 'judge-num';
+        num.textContent = `${state.judgeOrder.length}位: ${player}`;
+        orderEl.appendChild(num);
+        if (state.judgeOrder.length === state.players.length) {
+          confirmBtn.hidden = false;
+        }
+      });
+      btnsEl.appendChild(btn);
+    });
+    show('judge');
+  }
+
   function judgeResults() {
-    const sorted = [...state.players].sort((a, b) => state.scores[b] - state.scores[a]);
-    const scoreOrder = sorted.map(p => ({ name: p, score: state.scores[p], proposal: state.proposals[p] || '?' }));
-    const resultHtml = scoreOrder.map(item => {
-      return `<div class="score-line"><strong>${item.score}</strong>: ${item.proposal} (${item.name})</div>`;
+    const correct = [...state.players].sort((a, b) => state.scores[b] - state.scores[a]);
+    const isCorrect = state.judgeOrder.every((p, i) => p === correct[i]);
+    const scoreLines = correct.map((p, i) => {
+      const marked = state.judgeOrder[i] === p ? '✅' : '❌';
+      return `<div class="score-line">${marked} ${i + 1}位: ${state.proposals[p] || '?'} (${p} / ${state.scores[p]}点)</div>`;
     }).join('');
-    document.getElementById('result-body').innerHTML = resultHtml;
+    const verdict = `<div class="judge-verdict ${isCorrect ? 'success' : 'fail'}">${isCorrect ? '成功！🎉' : '失敗...'}</div>`;
+    document.getElementById('result-body').innerHTML = verdict + scoreLines;
     show('result');
   }
 
@@ -141,6 +172,8 @@
     showPropose();
   });
 
+  document.getElementById('btn-judge-confirm').addEventListener('click', judgeResults);
+
   document.getElementById('propose-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const input = document.getElementById('propose-input');
@@ -149,7 +182,11 @@
       const player = state.players[state.currentProposeIdx];
       state.proposals[player] = proposal;
       state.currentProposeIdx++;
-      showPropose();
+      if (state.currentProposeIdx >= state.players.length) {
+        showJudge();
+      } else {
+        showPropose();
+      }
     }
   });
 

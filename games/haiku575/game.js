@@ -7,6 +7,7 @@
     allPlayers: [],
     selectedPlayers: [],
     selectedRoles: {},
+    inputOrder: [],
     haiku: { line1: '', line2: '', line3: '' },
     currentInputIdx: 0,
     inputParts: ['上句（5音）', '中句（7音）', '下句（5音）'],
@@ -52,6 +53,9 @@
     state.selectedPlayers.forEach((p, i) => {
       state.selectedRoles[p] = roles[roleIndices[i]];
     });
+    state.inputOrder = ['上句', '中句', '下句'].map(
+      role => state.selectedPlayers.find(p => state.selectedRoles[p] === role)
+    );
     show('select');
     renderSelect();
   }
@@ -72,7 +76,7 @@
       renderReveal();
       return;
     }
-    const player = state.selectedPlayers[state.currentInputIdx];
+    const player = state.inputOrder[state.currentInputIdx];
     const part = state.inputParts[state.currentInputIdx];
     document.getElementById('input-player').textContent = player;
     document.getElementById('input-part').textContent = part;
