@@ -1,4 +1,4 @@
-const CACHE_NAME = 'passplay-v1';
+const CACHE_NAME = 'passplay-BUILD_VERSION';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

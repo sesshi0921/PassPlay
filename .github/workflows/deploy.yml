@@ -29,6 +29,12 @@ jobs:
       - name: Build games.json
         run: node build_games.js
 
+      - name: Inject build version into service worker
+        run: |
+          VERSION=$(git rev-parse --short HEAD)
+          sed -i "s/BUILD_VERSION/$VERSION/" service-worker.js
+          echo "SW cache version: passplay-$VERSION"
+
       - name: Commit updated games.json
         run: |
           if git diff --quiet games.json; then
