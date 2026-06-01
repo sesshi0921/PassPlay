@@ -36,7 +36,7 @@ body {
 }
 
 .phase { display: none; }
-.phase:not([hidden]) { display: flex; flex-direction: column; gap: 12px; }
+.phase:not([hidden]) { display: flex; flex-direction: column; gap: 12px; flex: 1; }
 
 .title {
   font-size: 24px;

@@ -127,9 +127,9 @@
     document.getElementById('score-bottom-black').querySelector('.count').textContent = blackScore;
     document.getElementById('score-bottom-white').querySelector('.count').textContent = whiteScore;
 
-    const currentName = state.players[state.currentPlayer === BLACK ? 0 : 1];
-    document.getElementById('turn-top').textContent = currentName + ' のターン';
-    document.getElementById('turn-bottom').textContent = currentName + ' のターン';
+    const isBlackTurn = state.currentPlayer === BLACK;
+    document.getElementById('turn-top').textContent    = isBlackTurn ? '' : state.players[1] + ' のターン';
+    document.getElementById('turn-bottom').textContent = isBlackTurn ? state.players[0] + ' のターン' : '';
 
     boardEl.innerHTML = '';
     const validMoves = getValidMoves(state.board, state.currentPlayer);
