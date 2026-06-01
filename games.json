@@ -1,7 +1,32 @@
 [
   {
+    "id": "haiku575",
+    "name": "575",
+    "icon": "icon.png",
+    "min": 3
+  },
+  {
+    "id": "othello",
+    "name": "オセロ",
+    "icon": "icon.png",
+    "min": 2
+  },
+  {
+    "id": "ranking-game",
+    "name": "価値観ゲーム",
+    "icon": "icon.png",
+    "min": 3
+  },
+  {
+    "id": "story-chain",
+    "name": "起承転結ゲーム",
+    "icon": "icon.png",
+    "min": 4
+  },
+  {
     "id": "word-wolf",
     "name": "ワードウルフ",
-    "icon": "icon.png"
+    "icon": "icon.png",
+    "min": 3
   }
 ]

@@ -40,7 +40,7 @@ function main() {
       console.warn(`[skip] ${id}: meta.json なし`);
       continue;
     }
-    games.push({ id, name: meta.name || id, icon: meta.icon || 'icon.png' });
+    games.push({ id, name: meta.name || id, icon: meta.icon || 'icon.png', ...(meta.min !== undefined && { min: meta.min }) });
   }
   fs.writeFileSync(OUT, JSON.stringify(games, null, 2) + '\n', 'utf-8');
   console.log(`games.json 更新: ${games.length} 件`);

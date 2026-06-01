@@ -79,6 +79,12 @@
       name.textContent = g.name || g.id;
       a.appendChild(img);
       a.appendChild(name);
+      if (g.min !== undefined) {
+        const min = document.createElement('div');
+        min.className = 'game-min';
+        min.textContent = `${g.min}人~`;
+        a.appendChild(min);
+      }
       $grid.appendChild(a);
     }
     // 奇数で末尾調整: グリッドが2列なので奇数時の見栄えは自然

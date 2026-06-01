@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>575 | PassPlay</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- setup -->
+  <section class="phase" data-phase="setup" hidden>
+    <h1 class="title">575</h1>
+    <p class="lead">3人で川柳を作ろう</p>
+    <div id="setup-players" class="info-box"></div>
+    <div class="actions">
+      <button id="btn-start" class="btn btn-primary">ゲームを始める</button>
+      <a class="btn btn-ghost" href="../../index.html">トップへ戻る</a>
+    </div>
+  </section>
+
+  <!-- select -->
+  <section class="phase" data-phase="select" hidden>
+    <h2 class="title">川柳作成者を選択中...</h2>
+    <div id="select-info" class="select-info"></div>
+    <button id="btn-to-input" class="btn btn-primary">決定・進む</button>
+  </section>
+
+  <!-- input -->
+  <section class="phase" data-phase="input" hidden>
+    <p class="input-label"><span id="input-player"></span> さんの番</p>
+    <p class="input-part" id="input-part"></p>
+    <form id="input-form" class="input-form">
+      <input id="input-text" class="input-text" type="text" maxlength="50" required placeholder="ここに入力...">
+      <button type="submit" class="btn btn-primary">決定</button>
+    </form>
+  </section>
+
+  <!-- reveal -->
+  <section class="phase" data-phase="reveal" hidden>
+    <h2 class="title">575</h2>
+    <div class="reveal-container">
+      <div id="haiku-display" class="haiku-display">
+        <div id="line1" class="haiku-line fade-in-hidden"></div>
+        <div id="line2" class="haiku-line fade-in-hidden"></div>
+        <div id="line3" class="haiku-line fade-in-hidden"></div>
+      </div>
+    </div>
+    <button id="btn-reveal-line1" class="btn btn-line">5を発表</button>
+    <button id="btn-reveal-line2" class="btn btn-line" hidden>7を発表</button>
+    <button id="btn-reveal-line3" class="btn btn-line" hidden>5を発表</button>
+    <div class="actions" id="final-actions" hidden>
+      <button id="btn-again" class="btn btn-primary">もう一度</button>
+      <a class="btn btn-ghost" href="../../index.html">トップへ戻る</a>
+    </div>
+  </section>
+
+</div>
+<script src="./game.js"></script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>オセロ | PassPlay</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- setup -->
+  <section class="phase" data-phase="setup" hidden>
+    <h1 class="title">オセロ</h1>
+    <p class="lead">上下逆向きで対戦する2人用リバーシ</p>
+    <div id="setup-players" class="info-box"></div>
+    <div class="actions">
+      <button id="btn-start" class="btn btn-primary">ゲームを始める</button>
+      <a class="btn btn-ghost" href="../../index.html">トップへ戻る</a>
+    </div>
+  </section>
+
+  <!-- pass -->
+  <section class="phase" data-phase="pass" hidden>
+    <p class="pass-sub">次のプレーヤーに端末を渡してください</p>
+    <h2 id="pass-name" class="pass-name"></h2>
+    <button id="btn-pass-next" class="btn btn-primary">準備OK・タップして進む</button>
+  </section>
+
+  <!-- play -->
+  <section class="phase" data-phase="play" hidden>
+    <div class="game-container" id="game-container">
+      <div class="board-section">
+        <div class="score-top">
+          <span id="score-top-black" class="score-item">⚫ <span class="count">0</span></span>
+          <span id="score-top-white" class="score-item">⚪ <span class="count">0</span></span>
+          <span id="turn-top" class="turn-label"></span>
+        </div>
+        <div id="board" class="board"></div>
+        <div class="score-bottom">
+          <span id="score-bottom-black" class="score-item">⚫ <span class="count">0</span></span>
+          <span id="score-bottom-white" class="score-item">⚪ <span class="count">0</span></span>
+          <span id="turn-bottom" class="turn-label"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- result -->
+  <section class="phase" data-phase="result" hidden>
+    <h2 class="title">ゲーム終了</h2>
+    <div id="result-body" class="result-body"></div>
+    <div class="actions">
+      <button id="btn-again" class="btn btn-primary">もう一度</button>
+      <a class="btn btn-ghost" href="../../index.html">トップへ戻る</a>
+    </div>
+  </section>
+
+</div>
+<script src="./game.js"></script>
+</body>
+</html>

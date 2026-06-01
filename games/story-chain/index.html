@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>ストーリーチェーン | PassPlay</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- setup -->
+  <section class="phase" data-phase="setup" hidden>
+    <h1 class="title">起承転結ゲーム</h1>
+    <p class="lead">4人で起承転結のストーリーを作ろう</p>
+    <div id="setup-players" class="info-box"></div>
+    <div class="actions">
+      <button id="btn-start" class="btn btn-primary">ゲームを始める</button>
+      <a class="btn btn-ghost" href="../../index.html">トップへ戻る</a>
+    </div>
+  </section>
+
+  <!-- pass -->
+  <section class="phase" data-phase="pass" hidden>
+    <p class="pass-sub">次のプレーヤーに端末を渡してください</p>
+    <h2 id="pass-name" class="pass-name"></h2>
+    <button id="btn-pass-next" class="btn btn-primary">準備OK・タップして進む</button>
+  </section>
+
+  <!-- write -->
+  <section class="phase" data-phase="write" hidden>
+    <p class="write-sub"><span id="write-name"></span> さんのターン</p>
+    <div id="story-display" class="story-display"></div>
+    <form id="write-form" class="write-form">
+      <textarea id="write-input" class="write-input" placeholder="1文を追加..." maxlength="100" required></textarea>
+      <button type="submit" class="btn btn-primary">追加する</button>
+    </form>
+  </section>
+
+  <!-- view -->
+  <section class="phase" data-phase="view" hidden>
+    <h2 class="title">ストーリー完成！</h2>
+    <div id="final-story" class="final-story"></div>
+    <div class="actions">
+      <button id="btn-again" class="btn btn-primary">もう一度</button>
+      <a class="btn btn-ghost" href="../../index.html">トップへ戻る</a>
+    </div>
+  </section>
+
+</div>
+<script src="./game.js"></script>
+</body>
+</html>

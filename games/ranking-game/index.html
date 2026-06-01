@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>順位ゲーム | PassPlay</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- setup -->
+  <section class="phase" data-phase="setup" hidden>
+    <h1 class="title">順位ゲーム</h1>
+    <p class="lead">隠された数字の順位を当てるゲーム</p>
+    <div id="setup-players" class="info-box"></div>
+    <div class="actions">
+      <button id="btn-start" class="btn btn-primary">ゲームを始める</button>
+      <a class="btn btn-ghost" href="../../index.html">トップへ戻る</a>
+    </div>
+  </section>
+
+  <!-- distribute -->
+  <section class="phase" data-phase="distribute" hidden>
+    <p class="pass-sub">次のプレーヤーに端末を渡してください</p>
+    <h2 id="dist-name" class="pass-name"></h2>
+    <div id="dist-content" class="dist-card">
+      <p class="dist-label">あなたの数字</p>
+      <button id="dist-reveal" class="dist-number" type="button">
+        <span class="dist-prompt">タップして見る</span>
+        <span id="dist-value" class="dist-shown" hidden></span>
+      </button>
+    </div>
+    <button id="btn-dist-next" class="btn btn-primary">確認した・次へ</button>
+  </section>
+
+  <!-- theme -->
+  <section class="phase" data-phase="theme" hidden>
+    <h2 class="title">テーマ発表</h2>
+    <p class="lead">このテーマで提案を考えてください</p>
+    <div id="theme-box" class="theme-box"></div>
+    <p class="theme-note">※一般化された序列が存在しない、独自の判断で順位が決まるテーマです</p>
+    <button id="btn-to-propose" class="btn btn-primary">提案を考えた・進む</button>
+  </section>
+
+  <!-- propose -->
+  <section class="phase" data-phase="propose" hidden>
+    <p class="propose-sub">あなたの提案を入力してください</p>
+    <form id="propose-form" class="propose-form">
+      <input id="propose-input" class="propose-input" type="text" placeholder="例: ラーメン" maxlength="30" required>
+      <button type="submit" class="btn btn-primary">提案する</button>
+    </form>
+    <div id="propose-list" class="propose-list"></div>
+  </section>
+
+  <!-- result -->
+  <section class="phase" data-phase="result" hidden>
+    <h2 class="title">ゲーム終了</h2>
+    <div id="result-body" class="result-body"></div>
+    <div class="actions">
+      <button id="btn-again" class="btn btn-primary">もう一度</button>
+      <a class="btn btn-ghost" href="../../index.html">トップへ戻る</a>
+    </div>
+  </section>
+
+</div>
+<script src="./game.js"></script>
+</body>
+</html>

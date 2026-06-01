@@ -135,6 +135,12 @@ body {
   text-align: center;
   color: #000000;
 }
+.game-card .game-min {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-soft);
+  text-align: center;
+}
 .game-card.empty {
   background: rgba(255,255,255,0.5);
   border: 2px dashed rgba(10,37,64,0.2);
