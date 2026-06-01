@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>エアホッケー | PassPlay</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- setup -->
+  <section class="phase" data-phase="setup" hidden>
+    <h1 class="title">エアホッケー</h1>
+    <p class="lead">スマホをテーブルに置いて2人同時プレイ</p>
+    <div id="setup-players" class="info-box"></div>
+    <div class="info-box" style="font-size:13px;color:rgba(255,255,255,0.6);line-height:1.6">
+      <p style="margin:0">🔴 下側プレイヤー &nbsp;|&nbsp; 🔵 上側プレイヤー</p>
+      <p style="margin:4px 0 0">先に <strong>7点</strong> 取った方が勝ち</p>
+    </div>
+    <div class="actions">
+      <button id="btn-start" class="btn btn-primary">ゲームを始める</button>
+      <a class="btn btn-ghost" href="../../index.html">トップへ戻る</a>
+    </div>
+  </section>
+
+  <!-- play -->
+  <section class="phase" data-phase="play" hidden>
+    <canvas id="game-canvas"></canvas>
+  </section>
+
+  <!-- result -->
+  <section class="phase" data-phase="result" hidden>
+    <h2 class="title">ゲーム終了</h2>
+    <div class="result-body">
+      <div id="result-winner"></div>
+      <div id="result-score" style="font-size:36px;margin-top:8px;color:rgba(255,255,255,0.8)"></div>
+    </div>
+    <div class="actions">
+      <button id="btn-again" class="btn btn-primary">もう一度</button>
+      <a class="btn btn-ghost" href="../../index.html">トップへ戻る</a>
+    </div>
+  </section>
+
+</div>
+<script src="./game.js"></script>
+</body>
+</html>

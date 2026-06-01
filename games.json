@@ -1,5 +1,11 @@
 [
   {
+    "id": "air-hockey",
+    "name": "エアホッケー",
+    "icon": "icon.svg",
+    "min": 2
+  },
+  {
     "id": "haiku575",
     "name": "575",
     "icon": "icon.png",
