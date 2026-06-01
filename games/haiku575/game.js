@@ -97,22 +97,36 @@
   }
 
   function renderReveal() {
+    revealStep = 0;
+    ['line1', 'line2', 'line3'].forEach(id => {
+      const el = document.getElementById(id);
+      el.className = 'haiku-line fade-in-hidden';
+    });
     document.getElementById('line1').textContent = state.haiku.line1;
     document.getElementById('line2').textContent = state.haiku.line2;
     document.getElementById('line3').textContent = state.haiku.line3;
+    document.getElementById('reveal-hint').textContent = 'タップして発表';
+    document.getElementById('reveal-container').style.cursor = 'pointer';
+    document.getElementById('final-actions').hidden = true;
   }
 
-  function revealLine(idx) {
+  let revealStep = 0;
+
+  function revealNext() {
     const lineIds = ['line1', 'line2', 'line3'];
-    const btnIds = ['btn-reveal-line1', 'btn-reveal-line2', 'btn-reveal-line3'];
-    const lineEl = document.getElementById(lineIds[idx]);
+    const hints = ['中の句を発表', '下の句を発表', ''];
+    if (revealStep >= 3) return;
+    const lineEl = document.getElementById(lineIds[revealStep]);
     lineEl.classList.remove('fade-in-hidden');
     lineEl.classList.add('fade-in-visible');
-    document.getElementById(btnIds[idx]).hidden = true;
-    if (idx < 2) {
-      document.getElementById(btnIds[idx + 1]).hidden = false;
-    } else {
+    revealStep++;
+    const hintEl = document.getElementById('reveal-hint');
+    if (revealStep >= 3) {
+      hintEl.textContent = '';
+      document.getElementById('reveal-container').style.cursor = 'default';
       document.getElementById('final-actions').hidden = false;
+    } else {
+      hintEl.textContent = hints[revealStep - 1];
     }
   }
 
@@ -129,9 +143,7 @@
     handleInput();
   });
 
-  document.getElementById('btn-reveal-line1').addEventListener('click', () => revealLine(0));
-  document.getElementById('btn-reveal-line2').addEventListener('click', () => revealLine(1));
-  document.getElementById('btn-reveal-line3').addEventListener('click', () => revealLine(2));
+  document.getElementById('reveal-container').addEventListener('click', revealNext);
 
   document.getElementById('btn-again').addEventListener('click', initGame);
 

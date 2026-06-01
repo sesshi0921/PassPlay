@@ -95,12 +95,6 @@ body {
   color: #666;
 }
 
-.btn-line {
-  background: white;
-  border-color: var(--accent);
-  color: var(--accent);
-  margin-bottom: 8px;
-}
 
 .select-info {
   background: white;
@@ -147,6 +141,7 @@ body {
 .reveal-container {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background: white;
@@ -154,13 +149,24 @@ body {
   border: 2px solid var(--text);
   padding: 20px;
   margin: 16px 0;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.reveal-hint {
+  font-size: 13px;
+  color: #aaa;
+  margin: 16px 0 0;
+  letter-spacing: 1px;
 }
 
 .haiku-display {
   display: flex;
+  flex-direction: row-reverse;
   justify-content: center;
   align-items: flex-start;
-  gap: 8px;
+  gap: 16px;
   min-height: 200px;
 }
 
