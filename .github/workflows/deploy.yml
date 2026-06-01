@@ -17,45 +17,19 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    outputs:
-      deploy: ${{ steps.detect.outputs.deploy }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-
-      - name: Detect new game directory
-        id: detect
-        run: |
-          set -e
-          if [ "$(git rev-list --count HEAD)" -lt 2 ]; then
-            echo "first commit"
-            NEW_COUNT=$(find games -maxdepth 2 -name meta.json 2>/dev/null | wc -l | tr -d ' ')
-          else
-            NEW_COUNT=$(git diff --diff-filter=A --name-only HEAD^ HEAD -- 'games/*/meta.json' | wc -l | tr -d ' ')
-            echo "added meta.json:"
-            git diff --diff-filter=A --name-only HEAD^ HEAD -- 'games/*/meta.json' || true
-          fi
-          echo "new game count: $NEW_COUNT"
-          if [ "$NEW_COUNT" -gt 0 ]; then
-            echo "deploy=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "deploy=false" >> "$GITHUB_OUTPUT"
-          fi
 
       - name: Setup Node.js
-        if: steps.detect.outputs.deploy == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
       - name: Build games.json
-        if: steps.detect.outputs.deploy == 'true'
         run: node build_games.js
 
       - name: Commit updated games.json
-        if: steps.detect.outputs.deploy == 'true'
         run: |
           if git diff --quiet games.json; then
             echo "games.json: 差分なし"
@@ -68,14 +42,12 @@ jobs:
           fi
 
       - name: Upload Pages artifact
-        if: steps.detect.outputs.deploy == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
 
   deploy:
     needs: build
-    if: needs.build.outputs.deploy == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
