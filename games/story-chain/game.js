@@ -79,18 +79,43 @@
     state.currentIdx++;
     if (state.currentIdx >= state.players.length) {
       document.body.classList.remove(...PART_CLASSES);
-      show('view');
-      let storyHtml = '';
-      state.story.forEach((s, i) => {
-        storyHtml += `<div class="${TEXT_CLASSES[i]}"><span class="part-badge ${BADGE_CLASSES[i]}">${PART_LABELS[i]}</span>${s}</div>`;
-      });
-      document.getElementById('final-story').innerHTML = storyHtml;
+      showView();
     } else {
       setPartColor(state.currentIdx);
       show('pass');
       updatePass();
     }
   }
+
+  const REVEAL_IDS = ['reveal-ki', 'reveal-sho', 'reveal-ten', 'reveal-ketsu'];
+  const REVEAL_LABELS = ['起', '承', '転', '結'];
+  let revealIdx = 0;
+
+  function showView() {
+    revealIdx = 0;
+    REVEAL_IDS.forEach((id, i) => {
+      const el = document.getElementById(id);
+      el.className = `reveal-part ${TEXT_CLASSES[i]} fade-hidden`;
+      el.innerHTML = `<span class="part-badge ${BADGE_CLASSES[i]}">${PART_LABELS[i]}</span>${state.story[i] || ''}`;
+    });
+    document.getElementById('view-actions').hidden = true;
+    document.getElementById('btn-reveal-next').hidden = false;
+    document.getElementById('btn-reveal-next').textContent = `「${REVEAL_LABELS[0]}」を見る`;
+    show('view');
+  }
+
+  document.getElementById('btn-reveal-next').addEventListener('click', () => {
+    const el = document.getElementById(REVEAL_IDS[revealIdx]);
+    el.classList.remove('fade-hidden');
+    el.classList.add('fade-visible');
+    revealIdx++;
+    if (revealIdx >= REVEAL_LABELS.length) {
+      document.getElementById('btn-reveal-next').hidden = true;
+      document.getElementById('view-actions').hidden = false;
+    } else {
+      document.getElementById('btn-reveal-next').textContent = `「${REVEAL_LABELS[revealIdx]}」を見る`;
+    }
+  });
 
   document.getElementById('btn-start').addEventListener('click', initGame);
   document.getElementById('btn-pass-next').addEventListener('click', showWrite);

@@ -9,7 +9,6 @@
     players: [],
     board: [],
     currentPlayer: BLACK,
-    passCount: 0,
     gameOver: false,
   };
 
@@ -18,6 +17,19 @@
     for (const el of phases) {
       el.hidden = (el.dataset.phase !== name);
     }
+  }
+
+  let toastEl = null, toastTimer = null;
+  function toast(msg) {
+    if (!toastEl) {
+      toastEl = document.createElement('div');
+      toastEl.className = 'toast';
+      document.body.appendChild(toastEl);
+    }
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2000);
   }
 
   function randInt(n) { return Math.floor(Math.random() * n); }
@@ -63,8 +75,9 @@
         if (board[nr][nc] === EMPTY) break;
         if (board[nr][nc] === opponent) {
           found = true;
-        } else if (board[nr][nc] === player && found) {
-          return true;
+        } else if (board[nr][nc] === player) {
+          if (found) return true;
+          break;
         }
         nr += dr; nc += dc;
       }
@@ -97,9 +110,7 @@
         if (newBoard[nr][nc] === opponent) {
           toFlip.push([nr, nc]);
         } else if (newBoard[nr][nc] === player) {
-          for (const [fr, fc] of toFlip) {
-            newBoard[fr][fc] = player;
-          }
+          for (const [fr, fc] of toFlip) newBoard[fr][fc] = player;
           break;
         }
         nr += dr; nc += dc;
@@ -109,57 +120,52 @@
   }
 
   function renderBoard() {
-    const board = document.getElementById('board');
+    const boardEl = document.getElementById('board');
     const { black: blackScore, white: whiteScore } = getScore(state.board);
     document.getElementById('score-top-black').querySelector('.count').textContent = blackScore;
     document.getElementById('score-top-white').querySelector('.count').textContent = whiteScore;
     document.getElementById('score-bottom-black').querySelector('.count').textContent = blackScore;
     document.getElementById('score-bottom-white').querySelector('.count').textContent = whiteScore;
 
-    const currentPlayer = state.players[state.currentPlayer === BLACK ? 0 : 1];
-    document.getElementById('turn-top').textContent = currentPlayer + ' のターン';
-    document.getElementById('turn-bottom').textContent = currentPlayer + ' のターン';
+    const currentName = state.players[state.currentPlayer === BLACK ? 0 : 1];
+    document.getElementById('turn-top').textContent = currentName + ' のターン';
+    document.getElementById('turn-bottom').textContent = currentName + ' のターン';
 
-    board.innerHTML = '';
+    boardEl.innerHTML = '';
     const validMoves = getValidMoves(state.board, state.currentPlayer);
     for (let r = 0; r < BOARD_SIZE; r++) {
       for (let c = 0; c < BOARD_SIZE; c++) {
         const cell = document.createElement('button');
         cell.className = 'cell';
-        cell.dataset.r = r;
-        cell.dataset.c = c;
         const piece = state.board[r][c];
-        if (piece === BLACK) {
-          cell.classList.add('black');
-          cell.innerHTML = '⚫';
-        } else if (piece === WHITE) {
-          cell.classList.add('white');
-          cell.innerHTML = '⚪';
-        }
+        if (piece === BLACK) { cell.classList.add('black'); cell.innerHTML = '⚫'; }
+        else if (piece === WHITE) { cell.classList.add('white'); cell.innerHTML = '⚪'; }
         const isValid = validMoves.some(m => m[0] === r && m[1] === c);
         if (isValid) {
           cell.classList.add('valid');
           cell.addEventListener('click', () => handleMove(r, c));
         }
-        board.appendChild(cell);
+        boardEl.appendChild(cell);
       }
     }
   }
 
   function handleMove(r, c) {
     state.board = placeAndFlip(state.board, state.currentPlayer, r, c);
-    state.passCount = 0;
     state.currentPlayer = -state.currentPlayer;
-    const validMoves = getValidMoves(state.board, state.currentPlayer);
-    if (validMoves.length === 0) {
-      state.passCount++;
+
+    let skipped = false;
+    if (getValidMoves(state.board, state.currentPlayer).length === 0) {
+      const opponentName = state.players[state.currentPlayer === BLACK ? 0 : 1];
       state.currentPlayer = -state.currentPlayer;
-      const validMovesAfterPass = getValidMoves(state.board, state.currentPlayer);
-      if (validMovesAfterPass.length === 0) {
+      if (getValidMoves(state.board, state.currentPlayer).length === 0) {
         endGame();
         return;
       }
+      skipped = true;
+      toast(`${opponentName} は置ける場所がないためスキップ`);
     }
+
     renderBoard();
   }
 
@@ -169,27 +175,19 @@
     const blackName = state.players[0];
     const whiteName = state.players[1];
     let result = '';
-    if (black > white) {
-      result = `${blackName} の勝利！<br>${black} - ${white}`;
-    } else if (white > black) {
-      result = `${whiteName} の勝利！<br>${white} - ${black}`;
-    } else {
-      result = `同点！<br>${black} - ${white}`;
-    }
+    if (black > white) result = `${blackName} の勝利！<br>${black} - ${white}`;
+    else if (white > black) result = `${whiteName} の勝利！<br>${white} - ${black}`;
+    else result = `同点！<br>${black} - ${white}`;
     document.getElementById('result-body').innerHTML = result;
     show('result');
   }
 
   function initGame() {
     state.players = loadPlayers();
-    if (state.players.length < 2) {
-      alert('2人以上のプレイヤーが必要です');
-      return;
-    }
+    if (state.players.length < 2) { alert('2人以上のプレイヤーが必要です'); return; }
     state.players = state.players.slice(0, 2);
     state.board = initBoard();
     state.currentPlayer = randInt(2) === 0 ? BLACK : WHITE;
-    state.passCount = 0;
     state.gameOver = false;
     show('play');
     renderBoard();
@@ -199,19 +197,15 @@
   document.getElementById('btn-again').addEventListener('click', () => {
     state.board = initBoard();
     state.currentPlayer = randInt(2) === 0 ? BLACK : WHITE;
-    state.passCount = 0;
     state.gameOver = false;
     show('play');
     renderBoard();
   });
 
-  const setupPlayers = document.getElementById('setup-players');
   const players = loadPlayers();
-  if (players.length >= 2) {
-    setupPlayers.innerHTML = `<p>${players[0]} vs ${players[1]}</p>`;
-  } else {
-    setupPlayers.innerHTML = '<p>プレイヤーが足りません（最低2人必要）</p>';
-  }
+  document.getElementById('setup-players').innerHTML = players.length >= 2
+    ? `<p>${players[0]} vs ${players[1]}</p>`
+    : '<p>プレイヤーが足りません（最低2人必要）</p>';
 
   show('setup');
 })();

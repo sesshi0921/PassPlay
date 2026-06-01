@@ -62,9 +62,11 @@
 
   function renderSelect() {
     const info = document.getElementById('select-info');
-    let html = '<div style="font-size:16px; line-height:1.8;">';
-    state.selectedPlayers.forEach(p => {
-      html += `<p>${p}: <strong>${state.selectedRoles[p]}</strong></p>`;
+    const roleOrder = ['上句', '中句', '下句'];
+    let html = '<div style="font-size:16px; line-height:2;">';
+    roleOrder.forEach(role => {
+      const player = state.selectedPlayers.find(p => state.selectedRoles[p] === role);
+      html += `<p><strong>${role}:</strong> ${player || '?'}</p>`;
     });
     html += '</div>';
     info.innerHTML = html;

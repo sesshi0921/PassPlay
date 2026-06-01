@@ -13,7 +13,6 @@
 }
 
 * { box-sizing: border-box; }
-[hidden] { display: none !important; }
 
 html, body {
   margin: 0;
@@ -141,16 +140,19 @@ body {
   color: var(--text-soft);
   line-height: 1.3;
   padding: 4px;
+  display: block;
 }
 
 .dist-shown {
-  font-size: 44px;
+  font-size: 48px;
+  font-weight: 700;
   display: none;
+  color: white;
 }
 
-.dist-number.revealed { background: var(--primary); }
+.dist-number.revealed { background: var(--primary-strong); }
 .dist-number.revealed .dist-prompt { display: none; }
-.dist-number.revealed .dist-shown { display: block; color: white; }
+.dist-number.revealed .dist-shown  { display: block; }
 
 .theme-box {
   background: white;

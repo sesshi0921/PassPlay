@@ -41,8 +41,14 @@
   <!-- view -->
   <section class="phase" data-phase="view" hidden>
     <h2 class="title">ストーリー完成！</h2>
-    <div id="final-story" class="final-story"></div>
-    <div class="actions">
+    <div class="reveal-story">
+      <div id="reveal-ki"    class="reveal-part ki-text    fade-hidden"></div>
+      <div id="reveal-sho"   class="reveal-part sho-text   fade-hidden"></div>
+      <div id="reveal-ten"   class="reveal-part ten-text   fade-hidden"></div>
+      <div id="reveal-ketsu" class="reveal-part ketsu-text fade-hidden"></div>
+    </div>
+    <button id="btn-reveal-next" class="btn btn-primary">「起」を見る</button>
+    <div class="actions" id="view-actions" hidden>
       <button id="btn-again" class="btn btn-primary">もう一度</button>
       <a class="btn btn-ghost" href="../../index.html">トップへ戻る</a>
     </div>

@@ -25,11 +25,11 @@
   <section class="phase" data-phase="distribute" hidden>
     <p class="pass-sub">次のプレーヤーに端末を渡してください</p>
     <h2 id="dist-name" class="pass-name"></h2>
-    <div id="dist-content" class="dist-card">
+    <div class="dist-card">
       <p class="dist-label">あなたの数字</p>
       <button id="dist-reveal" class="dist-number" type="button">
         <span class="dist-prompt">タップして見る</span>
-        <span id="dist-value" class="dist-shown" hidden></span>
+        <span id="dist-value" class="dist-shown"></span>
       </button>
     </div>
     <button id="btn-dist-next" class="btn btn-primary">確認した・次へ</button>
@@ -38,20 +38,10 @@
   <!-- theme -->
   <section class="phase" data-phase="theme" hidden>
     <h2 class="title">テーマ発表</h2>
-    <p class="lead">このテーマで提案を考えてください</p>
+    <p class="lead">このテーマに沿って、それぞれ頭の中で提案を考えよう</p>
     <div id="theme-box" class="theme-box"></div>
     <p class="theme-note">※一般化された序列が存在しない、独自の判断で順位が決まるテーマです</p>
-    <button id="btn-to-propose" class="btn btn-primary">提案を考えた・進む</button>
-  </section>
-
-  <!-- propose -->
-  <section class="phase" data-phase="propose" hidden>
-    <p class="propose-sub">あなたの提案を入力してください</p>
-    <form id="propose-form" class="propose-form">
-      <input id="propose-input" class="propose-input" type="text" placeholder="例: ラーメン" maxlength="30" required>
-      <button type="submit" class="btn btn-primary">提案する</button>
-    </form>
-    <div id="propose-list" class="propose-list"></div>
+    <button id="btn-to-judge" class="btn btn-primary">話し合いが終わった・進む</button>
   </section>
 
   <!-- judge -->

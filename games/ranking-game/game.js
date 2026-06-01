@@ -11,23 +11,21 @@
     '最高に居心地の良い場所',
     '思わず笑顔になる瞬間',
     '夢の職業',
+    '旅行先にしたい都市',
+    '一番幸せを感じる季節のイベント',
   ];
 
   const state = {
     players: [],
     scores: {},
     currentDistributeIdx: 0,
-    currentProposeIdx: 0,
     theme: '',
-    proposals: {},
     judgeOrder: [],
   };
 
   const phases = Array.from(document.querySelectorAll('[data-phase]'));
   function show(name) {
-    for (const el of phases) {
-      el.hidden = (el.dataset.phase !== name);
-    }
+    for (const el of phases) el.hidden = (el.dataset.phase !== name);
   }
 
   function randInt(n) { return Math.floor(Math.random() * n); }
@@ -43,30 +41,24 @@
   }
 
   function generateScores(n) {
-    const scores = Array.from({ length: n }, (_, i) => i);
-    for (let i = n - 1; i > 0; i--) {
+    const pool = Array.from({ length: 101 }, (_, i) => i);
+    for (let i = pool.length - 1; i > 0; i--) {
       const j = randInt(i + 1);
-      [scores[i], scores[j]] = [scores[j], scores[i]];
+      [pool[i], pool[j]] = [pool[j], pool[i]];
     }
-    return scores.map((_, i) => Math.floor((i / (n - 1)) * 100));
+    return pool.slice(0, n);
   }
 
   function initGame() {
     const players = loadPlayers();
-    if (players.length < 3) {
-      alert('3人以上のプレイヤーが必要です');
-      return;
-    }
+    if (players.length < 3) { alert('3人以上のプレイヤーが必要です'); return; }
     state.players = players;
     state.scores = {};
-    state.proposals = {};
+    state.judgeOrder = [];
     state.currentDistributeIdx = 0;
-    state.currentProposeIdx = 0;
     state.theme = THEMES[randInt(THEMES.length)];
     const playerScores = generateScores(state.players.length);
-    state.players.forEach((p, i) => {
-      state.scores[p] = playerScores[i];
-    });
+    state.players.forEach((p, i) => { state.scores[p] = playerScores[i]; });
     show('distribute');
     showDistribute();
   }
@@ -83,32 +75,7 @@
     const distValue = document.getElementById('dist-value');
     distReveal.classList.remove('revealed');
     distValue.textContent = state.scores[player];
-    distReveal.onclick = () => {
-      distReveal.classList.add('revealed');
-    };
-  }
-
-  function showPropose() {
-    if (state.currentProposeIdx >= state.players.length) {
-      showJudge();
-      return;
-    }
-    const player = state.players[state.currentProposeIdx];
-    document.querySelector('.propose-sub').textContent = player + ' の提案を入力してください';
-    document.getElementById('propose-input').value = '';
-    document.getElementById('propose-input').focus();
-    renderProposals();
-  }
-
-  function renderProposals() {
-    const list = document.getElementById('propose-list');
-    list.innerHTML = '';
-    state.players.slice(0, state.currentProposeIdx).forEach(p => {
-      const item = document.createElement('div');
-      item.className = 'propose-item';
-      item.innerHTML = `<strong>${p}</strong>: ${state.proposals[p] || '未定'}`;
-      list.appendChild(item);
-    });
+    distReveal.onclick = () => distReveal.classList.add('revealed');
   }
 
   function showJudge() {
@@ -120,23 +87,22 @@
     btnsEl.innerHTML = '';
     orderEl.innerHTML = '';
     confirmBtn.hidden = true;
+
     shuffled.forEach(player => {
       const btn = document.createElement('button');
       btn.className = 'judge-player-btn';
-      btn.textContent = `${player}：${state.proposals[player] || '?'}`;
+      btn.textContent = player;
       btn.dataset.player = player;
       btn.addEventListener('click', () => {
         if (btn.disabled) return;
         btn.disabled = true;
         btn.classList.add('selected');
         state.judgeOrder.push(player);
-        const num = document.createElement('span');
+        const num = document.createElement('div');
         num.className = 'judge-num';
         num.textContent = `${state.judgeOrder.length}位: ${player}`;
         orderEl.appendChild(num);
-        if (state.judgeOrder.length === state.players.length) {
-          confirmBtn.hidden = false;
-        }
+        if (state.judgeOrder.length === state.players.length) confirmBtn.hidden = false;
       });
       btnsEl.appendChild(btn);
     });
@@ -147,8 +113,8 @@
     const correct = [...state.players].sort((a, b) => state.scores[b] - state.scores[a]);
     const isCorrect = state.judgeOrder.every((p, i) => p === correct[i]);
     const scoreLines = correct.map((p, i) => {
-      const marked = state.judgeOrder[i] === p ? '✅' : '❌';
-      return `<div class="score-line">${marked} ${i + 1}位: ${state.proposals[p] || '?'} (${p} / ${state.scores[p]}点)</div>`;
+      const mark = state.judgeOrder[i] === p ? '✅' : '❌';
+      return `<div class="score-line">${mark} ${i + 1}位: ${p} (${state.scores[p]}点)</div>`;
     }).join('');
     const verdict = `<div class="judge-verdict ${isCorrect ? 'success' : 'fail'}">${isCorrect ? '成功！🎉' : '失敗...'}</div>`;
     document.getElementById('result-body').innerHTML = verdict + scoreLines;
@@ -167,38 +133,14 @@
     }
   });
 
-  document.getElementById('btn-to-propose').addEventListener('click', () => {
-    show('propose');
-    showPropose();
-  });
-
+  document.getElementById('btn-to-judge').addEventListener('click', showJudge);
   document.getElementById('btn-judge-confirm').addEventListener('click', judgeResults);
-
-  document.getElementById('propose-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const input = document.getElementById('propose-input');
-    const proposal = input.value.trim();
-    if (proposal) {
-      const player = state.players[state.currentProposeIdx];
-      state.proposals[player] = proposal;
-      state.currentProposeIdx++;
-      if (state.currentProposeIdx >= state.players.length) {
-        showJudge();
-      } else {
-        showPropose();
-      }
-    }
-  });
-
   document.getElementById('btn-again').addEventListener('click', initGame);
 
-  const setupPlayers = document.getElementById('setup-players');
   const players = loadPlayers();
-  if (players.length >= 3) {
-    setupPlayers.innerHTML = `<p>${players.join(', ')}</p><p>${players.length}人でプレイ</p>`;
-  } else {
-    setupPlayers.innerHTML = '<p>プレイヤーが足りません（最低3人必要）</p>';
-  }
+  document.getElementById('setup-players').innerHTML = players.length >= 3
+    ? `<p>${players.join(', ')}</p><p>${players.length}人でプレイ</p>`
+    : '<p>プレイヤーが足りません（最低3人必要）</p>';
 
   show('setup');
 })();
