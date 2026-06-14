@@ -41,6 +41,10 @@ html, body {
   color: #0a2540;
 }
 
+.plugin-status[hidden] {
+  display: none;
+}
+
 .plugin-error h1 {
   margin: 0;
   font-size: 22px;
