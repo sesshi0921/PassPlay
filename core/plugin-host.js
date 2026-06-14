@@ -145,6 +145,10 @@
     const message = event.data;
     if (!message || message.protocol !== PROTOCOL || message.pluginId !== activePlugin.id) return;
 
+    if (message.type === 'hello') {
+      send({ type: 'host-ready' });
+      return;
+    }
     if (message.type === 'ready') {
       clearTimeout(loadTimer);
       loading.hidden = true;
@@ -185,9 +189,9 @@
       frame.hidden = true;
       frame.sandbox = 'allow-scripts allow-same-origin allow-forms allow-pointer-lock';
       frame.allow = 'fullscreen';
+      window.addEventListener('message', handleMessage);
       frame.src = `./games/${activePlugin.id}/${activePlugin.entry}`;
       host.appendChild(frame);
-      window.addEventListener('message', handleMessage);
       loadTimer = setTimeout(() => {
         if (frame && frame.hidden) {
           frame.remove();

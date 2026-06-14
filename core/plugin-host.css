@@ -27,6 +27,10 @@ html, body {
   background: #fff;
 }
 
+.plugin-frame[hidden] {
+  display: none;
+}
+
 .plugin-status {
   min-height: 100%;
   display: grid;

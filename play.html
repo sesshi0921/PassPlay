@@ -17,6 +17,19 @@
     <a href="./index.html">トップへ戻る</a>
   </div>
 </main>
+<script>
+if ('serviceWorker' in navigator) {
+  let reloadingForUpdate = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloadingForUpdate) return;
+    reloadingForUpdate = true;
+    window.location.reload();
+  });
+  navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'none' })
+    .then(registration => registration.update())
+    .catch(error => console.log('SW registration failed:', error));
+}
+</script>
 <script src="./core/plugin-host.js"></script>
 </body>
 </html>

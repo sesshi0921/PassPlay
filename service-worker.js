@@ -61,6 +61,32 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  const networkFirst =
+    request.mode === 'navigate' ||
+    ['script', 'style'].includes(request.destination) ||
+    url.pathname.endsWith('/games.json') ||
+    url.pathname.endsWith('.json');
+
+  if (networkFirst) {
+    event.respondWith(
+      fetch(request).then((response) => {
+        if (response && response.status === 200 && response.type !== 'error') {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(request, responseToCache));
+        }
+        return response;
+      }).catch(async () => {
+        const cached = await caches.match(request);
+        if (cached) return cached;
+        if (request.mode === 'navigate') {
+          return caches.match(new URL('./index.html', self.registration.scope));
+        }
+        throw new Error(`Offline asset unavailable: ${url.pathname}`);
+      })
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(request).then((response) => {
       if (response) {

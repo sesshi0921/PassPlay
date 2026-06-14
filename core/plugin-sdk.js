@@ -10,9 +10,15 @@
   const embedded = window.parent !== window;
   const pending = new Map();
   const lifecycleListeners = new Map();
+  let resolveHostReady = null;
+  const hostReady = embedded
+    ? new Promise(resolve => { resolveHostReady = resolve; })
+    : Promise.resolve();
   let requestSequence = 0;
   let lifecycleActive = false;
   let registered = false;
+  let hostReadyReceived = !embedded;
+  let helloTimer = null;
 
   function validateDocumentContract() {
     if (!pluginId || !/^[a-z0-9-]+$/.test(pluginId)) {
@@ -66,7 +72,7 @@
     },
   };
 
-  function request(method, args = {}) {
+  async function request(method, args = {}) {
     if (!embedded) {
       const handler = directHandlers[method];
       return handler
@@ -74,6 +80,7 @@
         : Promise.reject(new Error(`Unsupported PassPlay API: ${method}`));
     }
 
+    await hostReady;
     return new Promise((resolve, reject) => {
       const requestId = `${pluginId}:${++requestSequence}`;
       const timer = setTimeout(() => {
@@ -125,6 +132,14 @@
     const message = event.data;
     if (!message || message.protocol !== PROTOCOL) return;
 
+    if (message.type === 'host-ready') {
+      if (!hostReadyReceived) {
+        hostReadyReceived = true;
+        clearInterval(helloTimer);
+        resolveHostReady();
+      }
+      return;
+    }
     if (message.type === 'response') {
       const callback = pending.get(message.requestId);
       if (!callback) return;
@@ -137,6 +152,18 @@
   });
 
   validateDocumentContract();
+
+  if (embedded) {
+    const sendHello = () => {
+      window.parent.postMessage({
+        protocol: PROTOCOL,
+        pluginId,
+        type: 'hello',
+      }, window.location.origin);
+    };
+    sendHello();
+    helloTimer = setInterval(sendHello, 250);
+  }
 
   async function register(initializer) {
     if (registered) throw new Error('PassPlay plugin is already registered');
