@@ -1,9 +1,9 @@
-(() => {
+window.PassPlay.register(async api => {
   'use strict';
 
-  const STORAGE_KEY = 'passplay.players';
   const BOARD_SIZE = 8;
   const BLACK = 1, WHITE = -1, EMPTY = 0;
+  const sharedPlayers = await api.players.list();
 
   const state = {
     players: [],
@@ -35,13 +35,7 @@
   function randInt(n) { return Math.floor(Math.random() * n); }
 
   function loadPlayers() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      const arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr.filter(s => typeof s === 'string' && s.length > 0) : [];
-    } catch {
-      return [];
-    }
+    return sharedPlayers.slice();
   }
 
   function initBoard() {

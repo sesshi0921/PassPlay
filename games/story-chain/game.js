@@ -1,7 +1,7 @@
-(() => {
+window.PassPlay.register(async api => {
   'use strict';
 
-  const STORAGE_KEY = 'passplay.players';
+  const sharedPlayers = await api.players.list();
   const PART_CLASSES = ['phase-ki', 'phase-sho', 'phase-ten', 'phase-ketsu'];
   const PART_LABELS = ['起', '承', '転', '結'];
   const BADGE_CLASSES = ['badge-ki', 'badge-sho', 'badge-ten', 'badge-ketsu'];
@@ -28,13 +28,7 @@
   }
 
   function loadPlayers() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      const arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr.filter(s => typeof s === 'string' && s.length > 0) : [];
-    } catch {
-      return [];
-    }
+    return sharedPlayers.slice();
   }
 
   function initGame() {

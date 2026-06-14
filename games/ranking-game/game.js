@@ -1,7 +1,7 @@
-(() => {
+window.PassPlay.register(async api => {
   'use strict';
 
-  const STORAGE_KEY = 'passplay.players';
+  const sharedPlayers = await api.players.list();
   const THEMES = [
     '嬉しい夜ご飯',
     '家の向かいに欲しい商業施設',
@@ -31,13 +31,7 @@
   function randInt(n) { return Math.floor(Math.random() * n); }
 
   function loadPlayers() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      const arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr.filter(s => typeof s === 'string' && s.length > 0) : [];
-    } catch {
-      return [];
-    }
+    return sharedPlayers.slice();
   }
 
   function generateScores(n) {

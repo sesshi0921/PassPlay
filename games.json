@@ -2,37 +2,125 @@
   {
     "id": "air-hockey",
     "name": "エアホッケー",
+    "description": "テーブルに置いて2人同時プレイ。先に7点取った方が勝ち",
+    "version": "1.0.0",
+    "apiVersion": "1.0",
+    "entry": "index.html",
     "icon": "icon.svg",
-    "min": 2
+    "permissions": [
+      "players:read",
+      "navigation"
+    ],
+    "assets": [
+      "index.html",
+      "game.js",
+      "style.css",
+      "icon.svg"
+    ],
+    "min": 2,
+    "max": 2
   },
   {
     "id": "haiku575",
     "name": "575",
+    "description": "ランダムに選ばれた3人が協力して川柳を作成。縦書きで和風に発表します",
+    "version": "1.0.0",
+    "apiVersion": "1.0",
+    "entry": "index.html",
     "icon": "icon.png",
+    "permissions": [
+      "players:read",
+      "navigation"
+    ],
+    "assets": [
+      "index.html",
+      "game.js",
+      "style.css",
+      "icon.png"
+    ],
     "min": 3
   },
   {
     "id": "othello",
     "name": "オセロ",
+    "description": "上下逆向きで対戦する2人用リバーシ。上下どちらからでもプレイ可能",
+    "version": "1.0.0",
+    "apiVersion": "1.0",
+    "entry": "index.html",
     "icon": "icon.png",
-    "min": 2
+    "permissions": [
+      "players:read",
+      "navigation"
+    ],
+    "assets": [
+      "index.html",
+      "game.js",
+      "style.css",
+      "icon.png"
+    ],
+    "min": 2,
+    "max": 2
   },
   {
     "id": "ranking-game",
     "name": "価値観ゲーム",
+    "description": "隠された価値スコアを当てるゲーム。テーマに基づいて提案し、他者の価値観を予想する",
+    "version": "1.0.0",
+    "apiVersion": "1.0",
+    "entry": "index.html",
     "icon": "icon.png",
+    "permissions": [
+      "players:read",
+      "navigation"
+    ],
+    "assets": [
+      "index.html",
+      "game.js",
+      "style.css",
+      "icon.png"
+    ],
     "min": 3
   },
   {
     "id": "story-chain",
     "name": "起承転結ゲーム",
+    "description": "各プレイヤーが起承転結の各句を担当してストーリーを作る創作ゲーム",
+    "version": "1.0.0",
+    "apiVersion": "1.0",
+    "entry": "index.html",
     "icon": "icon.png",
-    "min": 4
+    "permissions": [
+      "players:read",
+      "navigation"
+    ],
+    "assets": [
+      "index.html",
+      "game.js",
+      "style.css",
+      "icon.png"
+    ],
+    "min": 4,
+    "max": 4
   },
   {
     "id": "word-wolf",
     "name": "ワードウルフ",
+    "description": "似た単語に紛れ込んだ1人の人狼を探す多数決ゲーム",
+    "version": "1.0.0",
+    "apiVersion": "1.0",
+    "entry": "index.html",
     "icon": "icon.png",
+    "permissions": [
+      "players:read",
+      "navigation"
+    ],
+    "assets": [
+      "index.html",
+      "game.js",
+      "style.css",
+      "icon.png",
+      "words.json"
+    ],
     "min": 3
   }
 ]

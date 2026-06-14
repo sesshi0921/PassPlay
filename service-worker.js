@@ -1,36 +1,36 @@
 const CACHE_NAME = 'passplay-BUILD_VERSION';
-const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/app.js',
-  '/styles.css',
-  '/games.json',
-  '/games/word-wolf/index.html',
-  '/games/word-wolf/game.js',
-  '/games/word-wolf/style.css',
-  '/games/word-wolf/words.json',
-  '/games/othello/index.html',
-  '/games/othello/game.js',
-  '/games/othello/style.css',
-  '/games/ranking-game/index.html',
-  '/games/ranking-game/game.js',
-  '/games/ranking-game/style.css',
-  '/games/story-chain/index.html',
-  '/games/story-chain/game.js',
-  '/games/story-chain/style.css',
-  '/games/haiku575/index.html',
-  '/games/haiku575/game.js',
-  '/games/haiku575/style.css',
+const CORE_ASSETS = [
+  './',
+  './index.html',
+  './play.html',
+  './app.js',
+  './styles.css',
+  './manifest.json',
+  './games.json',
+  './icon.svg',
+  './core/plugin-host.css',
+  './core/plugin-host.js',
+  './core/plugin-sdk.js',
+  './core/plugin-api.d.ts',
+  './core/plugin-manifest.schema.json',
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE).catch(() => {
-        console.warn('Some assets failed to cache');
-      });
-    })
-  );
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    const manifestResponse = await fetch(new URL('./games.json', self.registration.scope), { cache: 'no-cache' });
+    const plugins = manifestResponse.ok ? await manifestResponse.clone().json() : [];
+    const pluginAssets = Array.isArray(plugins)
+      ? plugins.flatMap(plugin => plugin.assets.map(asset => `./games/${plugin.id}/${asset}`))
+      : [];
+    const assets = [...new Set([...CORE_ASSETS, ...pluginAssets])];
+
+    await Promise.all(assets.map(asset => (
+      cache.add(new URL(asset, self.registration.scope)).catch(() => {
+        console.warn(`Failed to cache: ${asset}`);
+      })
+    )));
+  })());
   self.skipWaiting();
 });
 
@@ -76,7 +76,7 @@ self.addEventListener('fetch', (event) => {
         });
         return response;
       }).catch(() => {
-        return caches.match('/index.html');
+        return caches.match(new URL('./index.html', self.registration.scope));
       });
     })
   );

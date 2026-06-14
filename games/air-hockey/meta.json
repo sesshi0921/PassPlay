@@ -1,7 +1,12 @@
 {
   "name": "エアホッケー",
+  "version": "1.0.0",
+  "apiVersion": "1.0",
+  "entry": "index.html",
   "icon": "icon.svg",
   "description": "テーブルに置いて2人同時プレイ。先に7点取った方が勝ち",
   "min": 2,
-  "max": 2
+  "max": 2,
+  "permissions": ["players:read", "navigation"],
+  "assets": ["index.html", "game.js", "style.css", "icon.svg"]
 }

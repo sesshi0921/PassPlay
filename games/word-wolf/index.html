@@ -4,11 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="passplay-plugin-id" content="word-wolf">
+<meta name="passplay-api-version" content="1.0">
 <title>ワードウルフ | PassPlay</title>
 <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-<div class="app">
+<div class="app" data-passplay-plugin-root>
 
   <!-- setup -->
   <section class="phase" data-phase="setup" hidden>
@@ -17,7 +19,7 @@
     <div id="setup-players" class="info-box"></div>
     <div class="actions">
       <button id="btn-start" class="btn btn-primary">ゲームを始める</button>
-      <a class="btn btn-ghost" href="../../index.html">トップへ戻る</a>
+      <a class="btn btn-ghost" href="../../index.html" data-passplay-home>トップへ戻る</a>
     </div>
   </section>
 
@@ -80,11 +82,12 @@
     <div id="result-body" class="result-body"></div>
     <div class="actions">
       <button id="btn-again" class="btn btn-primary">もう一度</button>
-      <a class="btn btn-ghost" href="../../index.html">トップへ戻る</a>
+      <a class="btn btn-ghost" href="../../index.html" data-passplay-home>トップへ戻る</a>
     </div>
   </section>
 
 </div>
+<script src="../../core/plugin-sdk.js"></script>
 <script src="./game.js"></script>
 </body>
 </html>

@@ -13,15 +13,19 @@ python3 -m http.server 8000
 # → http://localhost:8000/
 ```
 
-## ゲーム一覧の更新
+## プラグインの追加
 
-`games/<game-id>/meta.json` を置けば、`build_games.js` で `games.json` を再生成できる。
+PassPlayのゲームは、バージョン付きマニフェストとHTML契約を持つプラグインです。
+`games/<game-id>/`へプラグインを追加し、一覧を再生成します。
 
 ```sh
 node build_games.js
 ```
 
-手動で `games.json` を直接編集してもOK。
+このコマンドはマニフェスト、アセット、HTMLインターフェースも検証します。
+`games.json`は生成ファイルのため、直接編集しないでください。
+
+プラグインAPIと実装方法は [プラグイン開発ガイド](./docs/plugin-development.md) を参照してください。
 
 ## ドキュメント
 

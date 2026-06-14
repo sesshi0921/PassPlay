@@ -63,7 +63,7 @@
     for (const g of games) {
       const a = document.createElement('a');
       a.className = 'game-card';
-      a.href = `./games/${g.id}/index.html`;
+      a.href = `./play.html?game=${encodeURIComponent(g.id)}`;
       const img = document.createElement('img');
       img.src = `./games/${g.id}/${g.icon || 'icon.png'}`;
       img.alt = g.name || g.id;

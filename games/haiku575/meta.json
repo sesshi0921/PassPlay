@@ -1,6 +1,11 @@
 {
   "name": "575",
+  "version": "1.0.0",
+  "apiVersion": "1.0",
+  "entry": "index.html",
   "icon": "icon.png",
   "description": "ランダムに選ばれた3人が協力して川柳を作成。縦書きで和風に発表します",
-  "min": 3
+  "min": 3,
+  "permissions": ["players:read", "navigation"],
+  "assets": ["index.html", "game.js", "style.css", "icon.png"]
 }

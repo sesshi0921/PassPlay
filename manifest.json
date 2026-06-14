@@ -2,38 +2,24 @@
   "name": "PassPlay - パスして遊ぶみんなのゲーム",
   "short_name": "PassPlay",
   "description": "複数人でスマートフォンを回しながら遊ぶパーティーゲーム集",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#ffffff",
   "theme_color": "#2bb8e0",
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "./icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/icon.svg",
+      "src": "./icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshot-540.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow"
-    },
-    {
-      "src": "/screenshot-1280.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
     }
   ],
   "categories": ["games"],
@@ -42,12 +28,12 @@
       "name": "ワードウルフ",
       "short_name": "人狼",
       "description": "人狼を見つけるゲーム",
-      "url": "/games/word-wolf/index.html",
+      "url": "./play.html?game=word-wolf",
       "icons": [
         {
-          "src": "/icon-96.png",
-          "sizes": "96x96",
-          "type": "image/png"
+          "src": "./games/word-wolf/icon.png",
+          "sizes": "800x800",
+          "type": "image/jpeg"
         }
       ]
     }

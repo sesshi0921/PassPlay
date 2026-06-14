@@ -1,8 +1,8 @@
-(() => {
+window.PassPlay.register(async api => {
   'use strict';
 
-  const STORAGE_KEY = 'passplay.players';
   const WIN_SCORE = 7;
+  const sharedPlayers = await api.players.list();
 
   let W = 0, H = 0;
   let PUCK_R, PADDLE_R, GOAL_W;
@@ -372,10 +372,7 @@
   }
 
   function loadPlayers() {
-    try {
-      const arr = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-      return Array.isArray(arr) ? arr.filter(s => typeof s === 'string' && s.length > 0) : [];
-    } catch { return []; }
+    return sharedPlayers.slice();
   }
 
   function startGame() {
@@ -405,5 +402,9 @@
   if (players.length >= 2) state.players = players.slice(0, 2);
   document.getElementById('setup-players').innerHTML =
     `<p style="margin:0;font-size:15px">${state.players[0]} <span style="color:rgba(255,255,255,0.4)">vs</span> ${state.players[1]}</p>`;
+  api.lifecycle.on('deactivate', () => {
+    state.running = false;
+    cancelAnimationFrame(state.animFrame);
+  });
   show('setup');
 })();

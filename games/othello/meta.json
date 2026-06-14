@@ -1,7 +1,12 @@
 {
   "name": "オセロ",
+  "version": "1.0.0",
+  "apiVersion": "1.0",
+  "entry": "index.html",
   "icon": "icon.png",
   "description": "上下逆向きで対戦する2人用リバーシ。上下どちらからでもプレイ可能",
   "min": 2,
-  "max": 2
+  "max": 2,
+  "permissions": ["players:read", "navigation"],
+  "assets": ["index.html", "game.js", "style.css", "icon.png"]
 }
