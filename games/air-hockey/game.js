@@ -279,8 +279,6 @@ window.PassPlay.register(async api => {
     const scoreSize = Math.min(W * 0.11, 40);
     const nameSize  = Math.min(W * 0.052, 18);
     const margin = W * 0.05;
-    const yOff = H * 0.032 + scoreSize * 0.75;
-
     ctx.textBaseline = 'alphabetic';
 
     // Player 0 (bottom, red) — normal orientation, bottom-left
@@ -297,7 +295,7 @@ window.PassPlay.register(async api => {
 
     // Player 1 (top, blue) — rotated 180°, same position from their perspective
     ctx.save();
-    ctx.translate(W, 0);
+    ctx.translate(W, H);
     ctx.rotate(Math.PI);
     ctx.textAlign = 'left';
     ctx.font = `bold ${scoreSize}px -apple-system, sans-serif`;

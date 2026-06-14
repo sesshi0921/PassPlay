@@ -63,7 +63,7 @@
   },
   {
     "id": "ranking-game",
-    "name": "価値観ゲーム",
+    "name": "itoo",
     "description": "隠された価値スコアを当てるゲーム。テーマに基づいて提案し、他者の価値観を予想する",
     "version": "1.0.0",
     "apiVersion": "1.0",
