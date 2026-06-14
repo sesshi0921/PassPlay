@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#2bb8e0">
+<meta name="theme-color" content="#111111">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
@@ -16,8 +16,14 @@
 <body>
 <div class="app">
   <header class="app-header">
-    <h1>PassPlay</h1>
-    <p class="subtitle">パスして遊ぶみんなのゲーム</p>
+    <div class="icon-marquee" aria-hidden="true">
+      <div id="icon-marquee-row-1" class="icon-marquee-row"></div>
+      <div id="icon-marquee-row-2" class="icon-marquee-row icon-marquee-row-reverse"></div>
+    </div>
+    <div class="brand-lockup">
+      <h1>PassPlay</h1>
+      <p class="subtitle">パスして遊ぶみんなのゲーム</p>
+    </div>
   </header>
 
   <section class="games-section">

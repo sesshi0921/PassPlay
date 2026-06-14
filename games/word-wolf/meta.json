@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "apiVersion": "1.0",
   "entry": "index.html",
-  "icon": "icon.png",
+  "icon": "icon-toy.png",
   "description": "似た単語に紛れ込んだ1人の人狼を探す多数決ゲーム",
   "min": 3,
   "permissions": ["players:read", "navigation"],
-  "assets": ["index.html", "game.js", "style.css", "icon.png", "words.json"]
+  "assets": ["index.html", "game.js", "style.css", "icon.png", "icon-toy.png", "words.json"]
 }

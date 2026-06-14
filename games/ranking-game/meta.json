@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "apiVersion": "1.0",
   "entry": "index.html",
-  "icon": "icon.png",
+  "icon": "icon-toy.png",
   "description": "隠された価値スコアを当てるゲーム。テーマに基づいて提案し、他者の価値観を予想する",
   "min": 3,
   "permissions": ["players:read", "navigation"],
-  "assets": ["index.html", "game.js", "style.css", "icon.png"]
+  "assets": ["index.html", "game.js", "style.css", "icon.png", "icon-toy.png"]
 }

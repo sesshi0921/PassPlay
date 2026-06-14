@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "apiVersion": "1.0",
   "entry": "index.html",
-  "icon": "icon.png",
+  "icon": "icon-toy.png",
   "description": "各プレイヤーが起承転結の各句を担当してストーリーを作る創作ゲーム",
   "min": 4,
   "max": 4,
   "permissions": ["players:read", "navigation"],
-  "assets": ["index.html", "game.js", "style.css", "icon.png"]
+  "assets": ["index.html", "game.js", "style.css", "icon.png", "icon-toy.png"]
 }

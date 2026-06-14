@@ -6,8 +6,8 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#ffffff",
-  "theme_color": "#2bb8e0",
+  "background_color": "#f2f2f0",
+  "theme_color": "#111111",
   "icons": [
     {
       "src": "./icon.svg",
@@ -31,9 +31,9 @@
       "url": "./play.html?game=word-wolf",
       "icons": [
         {
-          "src": "./games/word-wolf/icon.png",
-          "sizes": "800x800",
-          "type": "image/jpeg"
+          "src": "./games/word-wolf/icon-toy.png",
+          "sizes": "512x512",
+          "type": "image/png"
         }
       ]
     }

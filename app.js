@@ -10,6 +10,10 @@
   const $count = document.getElementById('players-count');
   const $form = document.getElementById('player-form');
   const $input = document.getElementById('player-input');
+  const $marqueeRows = [
+    document.getElementById('icon-marquee-row-1'),
+    document.getElementById('icon-marquee-row-2'),
+  ];
 
   // プレーヤー永続化
   function loadPlayers() {
@@ -41,6 +45,21 @@
   }
 
   // ゲーム一覧描画
+  function renderMarquee(games) {
+    for (const [rowIndex, row] of $marqueeRows.entries()) {
+      row.innerHTML = '';
+      const sequence = rowIndex === 0 ? games : games.slice().reverse();
+      for (let repeat = 0; repeat < 4; repeat++) {
+        for (const game of sequence) {
+          const img = document.createElement('img');
+          img.src = `./games/${game.id}/${game.icon || 'icon.png'}`;
+          img.alt = '';
+          row.appendChild(img);
+        }
+      }
+    }
+  }
+
   async function renderGames() {
     let games = [];
     try {
@@ -52,6 +71,7 @@
       games = [];
     }
 
+    renderMarquee(games);
     $grid.innerHTML = '';
     if (games.length === 0) {
       const empty = document.createElement('div');
