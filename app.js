@@ -2,6 +2,9 @@
   'use strict';
 
   const STORAGE_KEY = 'passplay.players';
+  const MODE_STORAGE_KEY = 'passplay.mode';
+  const DEFAULT_MODE = 'single';
+  const VALID_MODES = new Set(['single', 'multi']);
   const MAX_PLAYERS = 16;
   const MAX_NAME_LEN = 16;
 
@@ -14,6 +17,36 @@
     document.getElementById('icon-marquee-row-1'),
     document.getElementById('icon-marquee-row-2'),
   ];
+  const $modeButtons = [...document.querySelectorAll('[data-mode]')];
+  const $modePanels = [...document.querySelectorAll('[data-mode-panel]')];
+
+  function initialMode() {
+    const queryMode = new URLSearchParams(window.location.search).get('mode');
+    if (VALID_MODES.has(queryMode)) return queryMode;
+    const savedMode = localStorage.getItem(MODE_STORAGE_KEY);
+    return VALID_MODES.has(savedMode) ? savedMode : DEFAULT_MODE;
+  }
+
+  function selectMode(mode, updateUrl = true) {
+    const selectedMode = VALID_MODES.has(mode) ? mode : DEFAULT_MODE;
+    for (const button of $modeButtons) {
+      const selected = button.dataset.mode === selectedMode;
+      button.setAttribute('aria-selected', String(selected));
+      button.tabIndex = selected ? 0 : -1;
+    }
+    for (const panel of $modePanels) {
+      const selected = panel.dataset.modePanel === selectedMode;
+      panel.hidden = !selected;
+      panel.classList.toggle('is-active', selected);
+    }
+    localStorage.setItem(MODE_STORAGE_KEY, selectedMode);
+
+    if (updateUrl) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('mode', selectedMode);
+      history.replaceState(null, '', url);
+    }
+  }
 
   // プレーヤー永続化
   function loadPlayers() {
@@ -178,6 +211,18 @@
     $input.focus();
   });
 
+  for (const button of $modeButtons) {
+    button.addEventListener('click', () => selectMode(button.dataset.mode));
+    button.addEventListener('keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+      event.preventDefault();
+      const nextMode = button.dataset.mode === 'single' ? 'multi' : 'single';
+      selectMode(nextMode);
+      document.querySelector(`[data-mode="${nextMode}"]`)?.focus();
+    });
+  }
+
+  selectMode(initialMode(), false);
   renderGames();
   renderPlayers();
 })();

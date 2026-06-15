@@ -26,19 +26,73 @@
     </div>
   </header>
 
-  <section class="games-section">
-    <h2 class="section-title">ゲーム</h2>
-    <div id="games-grid" class="games-grid" aria-live="polite"></div>
-  </section>
+  <nav class="mode-switch" role="tablist" aria-label="プレイモード">
+    <button
+      id="mode-single"
+      class="mode-button"
+      type="button"
+      role="tab"
+      aria-selected="true"
+      aria-controls="single-mode-panel"
+      data-mode="single"
+    >
+      <span class="mode-button-title">1台で遊ぶ</span>
+      <span class="mode-button-note">スマホを回してプレイ</span>
+    </button>
+    <button
+      id="mode-multi"
+      class="mode-button"
+      type="button"
+      role="tab"
+      aria-selected="false"
+      aria-controls="multi-mode-panel"
+      data-mode="multi"
+    >
+      <span class="mode-button-title">みんなのスマホ</span>
+      <span class="mode-button-note">各自の端末でプレイ</span>
+    </button>
+  </nav>
 
-  <section class="players-section">
-    <h2 class="section-title">プレーヤー <span id="players-count" class="count">0</span></h2>
-    <form id="player-form" class="player-form" autocomplete="off">
-      <input id="player-input" class="player-input" type="text" placeholder="名前を入力" maxlength="16" required>
-      <button class="btn-add" type="submit">追加</button>
-    </form>
-    <ul id="players-list" class="players-list"></ul>
-  </section>
+  <div
+    id="single-mode-panel"
+    class="mode-panel is-active"
+    role="tabpanel"
+    aria-labelledby="mode-single"
+    data-mode-panel="single"
+  >
+    <section class="games-section">
+      <h2 class="section-title">1台で遊べるゲーム</h2>
+      <div id="games-grid" class="games-grid" aria-live="polite"></div>
+    </section>
+
+    <section class="players-section">
+      <h2 class="section-title">プレーヤー <span id="players-count" class="count">0</span></h2>
+      <form id="player-form" class="player-form" autocomplete="off">
+        <input id="player-input" class="player-input" type="text" placeholder="名前を入力" maxlength="16" required>
+        <button class="btn-add" type="submit">追加</button>
+      </form>
+      <ul id="players-list" class="players-list"></ul>
+    </section>
+  </div>
+
+  <div
+    id="multi-mode-panel"
+    class="mode-panel"
+    role="tabpanel"
+    aria-labelledby="mode-multi"
+    data-mode-panel="multi"
+    hidden
+  >
+    <section class="multi-empty" aria-labelledby="multi-empty-title">
+      <div class="multi-empty-icon" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+      <p class="multi-empty-label">MULTI DEVICE</p>
+      <h2 id="multi-empty-title">対応ゲーム準備中</h2>
+      <p>ルームを作って、それぞれのスマホから参加できるゲームを追加予定です。</p>
+      <div class="multi-empty-status">ゲーム 0件</div>
+    </section>
+  </div>
 </div>
 
 <script src="./app.js"></script>
