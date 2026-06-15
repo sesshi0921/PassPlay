@@ -31,6 +31,9 @@
 
 html,
 body {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
   background: var(--pp-bg);
   color: var(--pp-ink);
 }
@@ -50,7 +53,13 @@ body.phase-ketsu {
 .app {
   position: relative;
   isolation: isolate;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
   padding: calc(14px + var(--safe-top)) 14px calc(14px + var(--safe-bottom));
+  background:
+    radial-gradient(circle at 15% 0%, #ffffff 0, transparent 36%),
+    linear-gradient(180deg, var(--pp-bg) 0%, var(--pp-bg-2) 100%);
 }
 
 .app::before,
@@ -365,6 +374,56 @@ html:has(meta[name="passplay-plugin-id"][content="othello"]) .cell {
 
 html:has(meta[name="passplay-plugin-id"][content="othello"]) .cell.valid {
   background: rgba(200, 230, 201, .55) !important;
+}
+
+html:has(meta[name="passplay-plugin-id"][content="othello"]) .piece,
+html:has(meta[name="passplay-plugin-id"][content="othello"]) .score-disc {
+  position: relative;
+  display: inline-block;
+  border-radius: 50%;
+  box-shadow:
+    inset -3px -4px 6px rgba(42, 24, 12, .32),
+    inset 3px 3px 5px rgba(255, 255, 255, .42),
+    2px 3px 4px rgba(0, 0, 0, .3);
+}
+
+html:has(meta[name="passplay-plugin-id"][content="othello"]) .piece {
+  width: 76%;
+  height: 76%;
+}
+
+html:has(meta[name="passplay-plugin-id"][content="othello"]) .score-disc {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+html:has(meta[name="passplay-plugin-id"][content="othello"]) .piece::after,
+html:has(meta[name="passplay-plugin-id"][content="othello"]) .score-disc::after {
+  content: "";
+  position: absolute;
+  inset: 20%;
+  border: 1px solid rgba(116, 75, 39, .28);
+  border-radius: 50%;
+}
+
+html:has(meta[name="passplay-plugin-id"][content="othello"]) .piece-black,
+html:has(meta[name="passplay-plugin-id"][content="othello"]) .score-disc.black {
+  border: 1px solid #1b120c;
+  background:
+    radial-gradient(circle at 32% 26%, #665140 0, #2e241c 42%, #0d0b09 78%, #000000 100%);
+}
+
+html:has(meta[name="passplay-plugin-id"][content="othello"]) .piece-black::after,
+html:has(meta[name="passplay-plugin-id"][content="othello"]) .score-disc.black::after {
+  border-color: rgba(205, 169, 126, .2);
+}
+
+html:has(meta[name="passplay-plugin-id"][content="othello"]) .piece-white,
+html:has(meta[name="passplay-plugin-id"][content="othello"]) .score-disc.white {
+  border: 1px solid #9b774b;
+  background:
+    radial-gradient(circle at 32% 26%, #fffdf4 0, #eee0c1 48%, #c6a579 80%, #987043 100%);
 }
 
 html:has(meta[name="passplay-plugin-id"][content="othello"]) .turn-label {

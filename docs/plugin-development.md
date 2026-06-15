@@ -67,7 +67,7 @@ games/example-game/
 - `data-passplay-plugin-root`は1つ以上必要です。
 - ゲーム固有CSSの後に`core/game-theme.css`を読み込みます。
 - 盤面などの固有レイアウトは`style.css`、背景・カード・ボタン・入力欄は共通テーマへ委ねます。
-- オセロは盤面を含む既存テーマを維持するため、共有テーマの対象外です。
+- オセロも共有テーマを使用し、緑の盤面など必要なゲーム固有部分だけを維持します。
 - SDKはゲームスクリプトより先に読み込みます。
 - `data-passplay-home`付き要素はNavigation APIへ自動接続されます。
 

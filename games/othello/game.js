@@ -132,8 +132,13 @@ window.PassPlay.register(async api => {
         const cell = document.createElement('button');
         cell.className = 'cell';
         const piece = state.board[r][c];
-        if (piece === BLACK) { cell.classList.add('black'); cell.innerHTML = '⚫'; }
-        else if (piece === WHITE) { cell.classList.add('white'); cell.innerHTML = '⚪'; }
+        if (piece === BLACK) {
+          cell.classList.add('black');
+          cell.innerHTML = '<span class="piece piece-black" aria-label="黒"></span>';
+        } else if (piece === WHITE) {
+          cell.classList.add('white');
+          cell.innerHTML = '<span class="piece piece-white" aria-label="白"></span>';
+        }
         const isValid = validMoves.some(m => m[0] === r && m[1] === c);
         if (isValid) {
           cell.classList.add('valid');

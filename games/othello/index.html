@@ -8,6 +8,7 @@
 <meta name="passplay-api-version" content="1.0">
 <title>オセロ | PassPlay</title>
 <link rel="stylesheet" href="./style.css">
+<link rel="stylesheet" href="../../core/game-theme.css">
 </head>
 <body>
 <div class="app" data-passplay-plugin-root>
@@ -35,14 +36,14 @@
     <div class="game-container" id="game-container">
       <div class="board-section">
         <div class="score-top">
-          <span id="score-top-black" class="score-item">⚫ <span class="count">0</span></span>
-          <span id="score-top-white" class="score-item">⚪ <span class="count">0</span></span>
+          <span id="score-top-black" class="score-item"><span class="score-disc black"></span><span class="count">0</span></span>
+          <span id="score-top-white" class="score-item"><span class="score-disc white"></span><span class="count">0</span></span>
           <span id="turn-top" class="turn-label"></span>
         </div>
         <div id="board" class="board"></div>
         <div class="score-bottom">
-          <span id="score-bottom-black" class="score-item">⚫ <span class="count">0</span></span>
-          <span id="score-bottom-white" class="score-item">⚪ <span class="count">0</span></span>
+          <span id="score-bottom-black" class="score-item"><span class="score-disc black"></span><span class="count">0</span></span>
+          <span id="score-bottom-white" class="score-item"><span class="score-disc white"></span><span class="count">0</span></span>
           <span id="turn-bottom" class="turn-label"></span>
         </div>
       </div>
