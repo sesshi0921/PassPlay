@@ -12,6 +12,7 @@
   --shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
   --radius: 18px;
   --home-control-height: 96px;
+  --home-control-bottom: calc(8px + var(--safe-bottom));
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --visual-bottom: 0px;
@@ -230,7 +231,7 @@ body {
   gap: 10px;
 }
 #single-mode-panel.is-active {
-  padding-bottom: calc(var(--home-control-height) + var(--safe-bottom));
+  padding-bottom: calc(var(--home-control-height) + var(--home-control-bottom));
 }
 .mode-panel[hidden] {
   display: none;
@@ -317,25 +318,33 @@ body {
 }
 .players-section {
   position: fixed;
-  left: 10px;
-  right: 10px;
-  bottom: 0;
+  left: 12px;
+  right: 12px;
+  bottom: var(--home-control-bottom);
   z-index: 50;
-  height: calc(70dvh + var(--visual-bottom));
-  max-height: calc(70dvh + var(--visual-bottom));
+  height: min(70dvh, calc(100dvh - var(--home-control-bottom)));
+  max-height: min(70dvh, calc(100dvh - var(--home-control-bottom)));
   display: flex;
   flex-direction: column;
-  background: rgba(248,248,246,.98);
-  border: 1px solid #c8c8c4;
-  border-bottom: 0;
-  box-shadow: 0 -8px 28px rgba(0,0,0,.22);
-  border-radius: 20px 20px 0 0;
-  padding: 0 12px calc(var(--safe-bottom) + var(--visual-bottom));
-  transform: translateY(calc(100% - var(--home-control-height) - var(--safe-bottom) - var(--visual-bottom)));
-  transition: transform .24s cubic-bezier(.2,.75,.25,1);
+  padding: 0 12px;
+  transform: translateY(calc(100% - var(--home-control-height)));
+  transition:
+    transform .24s cubic-bezier(.2,.75,.25,1),
+    inset .24s cubic-bezier(.2,.75,.25,1),
+    height .24s cubic-bezier(.2,.75,.25,1),
+    border-radius .24s ease;
   will-change: transform;
 }
 .players-section.is-open {
+  left: 10px;
+  right: 10px;
+  bottom: 0;
+  height: calc(70dvh + var(--visual-bottom));
+  max-height: calc(70dvh + var(--visual-bottom));
+  padding-bottom: calc(var(--safe-bottom) + var(--visual-bottom));
+  border-bottom: 0;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -8px 28px rgba(0,0,0,.22);
   transform: translateY(0);
 }
 .players-toggle {
@@ -369,26 +378,22 @@ body {
   position: relative;
   width: 32px;
   height: 32px;
-  border-radius: 50%;
-  background: #111111;
-}
-.players-toggle-icon::before,
-.players-toggle-icon::after {
-  content: "";
-  position: absolute;
-  left: 9px;
-  top: 15px;
-  width: 14px;
-  height: 2px;
-  border-radius: 2px;
-  background: #ffffff;
+  flex: 0 0 auto;
   transition: transform .2s ease;
 }
-.players-toggle-icon::after {
-  transform: rotate(90deg);
+.players-toggle-icon::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 10px;
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-bottom: 12px solid #111111;
 }
-.players-section.is-open .players-toggle-icon::after {
-  transform: rotate(0);
+.players-section.is-open .players-toggle-icon {
+  transform: rotate(180deg);
 }
 .players-sheet-content {
   min-height: 0;
@@ -554,18 +559,22 @@ body {
   font-weight: 700;
 }
 
-.multi-profile {
-  position: relative;
-  z-index: 2;
-  flex: 0 0 auto;
-  padding: 12px;
+.home-control-card {
+  min-height: var(--home-control-height);
   border: 1px solid #c8c8c4;
   border-radius: var(--radius);
   background: rgba(248,248,246,.98);
   box-shadow: var(--shadow);
+}
+
+.multi-profile {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  height: var(--home-control-height);
+  padding: 12px;
   transform: translateY(calc(-1 * var(--keyboard-bottom)));
   transition: transform .2s ease;
-  min-height: var(--home-control-height);
 }
 .multi-profile label {
   display: block;
