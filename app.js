@@ -31,9 +31,13 @@
     const bottomInset = viewport
       ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)
       : 0;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true;
     const keyboardInset = bottomInset >= 150 ? bottomInset : 0;
+    const viewportBottom = !isStandalone && keyboardInset === 0 ? bottomInset : 0;
     document.documentElement.style.setProperty('--visual-bottom', `${bottomInset}px`);
     document.documentElement.style.setProperty('--keyboard-bottom', `${keyboardInset}px`);
+    document.documentElement.style.setProperty('--viewport-bottom', `${viewportBottom}px`);
   }
 
   function initialMode() {
