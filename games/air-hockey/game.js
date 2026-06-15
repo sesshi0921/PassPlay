@@ -485,4 +485,4 @@ window.PassPlay.register(async api => {
     cancelAnimationFrame(state.animFrame);
   });
   show('setup');
-})();
+});

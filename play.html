@@ -4,13 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#2bb8e0">
+<meta name="theme-color" content="#111111">
 <title>ゲーム | PassPlay</title>
 <link rel="stylesheet" href="./core/plugin-host.css">
 </head>
 <body>
 <main id="plugin-host" class="plugin-host" aria-live="polite">
-  <div id="plugin-loading" class="plugin-status">ゲームを読み込んでいます...</div>
+  <div id="plugin-loading" class="plugin-status plugin-loading">
+    <div class="loading-toys" aria-hidden="true">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <p class="loading-brand">PassPlay</p>
+    <p class="loading-message">ゲームを読み込んでいます...</p>
+  </div>
   <div id="plugin-error" class="plugin-status plugin-error" hidden>
     <h1>ゲームを起動できません</h1>
     <p id="plugin-error-message"></p>

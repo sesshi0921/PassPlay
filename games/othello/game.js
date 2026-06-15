@@ -202,4 +202,4 @@ window.PassPlay.register(async api => {
     : '<p>プレイヤーが足りません（最低2人必要）</p>';
 
   show('setup');
-})();
+});

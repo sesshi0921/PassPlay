@@ -150,4 +150,4 @@ window.PassPlay.register(async api => {
   }
 
   show('setup');
-})();
+});

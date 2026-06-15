@@ -287,4 +287,4 @@ window.PassPlay.register(async api => {
   // 起動
   bind();
   renderSetup();
-})();
+});

@@ -85,11 +85,13 @@ function validateHtmlContract(id, entryPath) {
   assert(apiVersionMeta?.content === API_VERSION, `${id}: HTMLのpassplay-api-versionが不正です`);
   assert(/\sdata-passplay-plugin-root(?:\s|>)/.test(html), `${id}: HTMLにdata-passplay-plugin-rootがありません`);
   assert(gameStyle, `${id}: HTMLにstyle.cssの読み込みがありません`);
-  assert(sharedTheme, `${id}: HTMLにgame-theme.cssの読み込みがありません`);
-  assert(
-    html.indexOf('./style.css') < html.indexOf('../../core/game-theme.css'),
-    `${id}: game-theme.cssはゲーム固有style.cssより後に読み込んでください`,
-  );
+  if (id !== 'othello') {
+    assert(sharedTheme, `${id}: HTMLにgame-theme.cssの読み込みがありません`);
+    assert(
+      html.indexOf('./style.css') < html.indexOf('../../core/game-theme.css'),
+      `${id}: game-theme.cssはゲーム固有style.cssより後に読み込んでください`,
+    );
+  }
   assert(sdkScript, `${id}: HTMLにplugin-sdk.jsの読み込みがありません`);
   assert(gameScript, `${id}: HTMLにgame.jsの読み込みがありません`);
   assert(
@@ -102,6 +104,10 @@ function validateHtmlContract(id, entryPath) {
   assert(
     /\bPassPlay\.register\s*\(/.test(gameScriptSource),
     `${id}: game.jsはPassPlay.register()で登録してください`,
+  );
+  assert(
+    !/\bPassPlay\.register\s*\([\s\S]*\)\s*\(\s*\)\s*;?\s*$/.test(gameScriptSource),
+    `${id}: PassPlay.register()の戻り値を関数として呼び出さないでください`,
   );
 }
 
