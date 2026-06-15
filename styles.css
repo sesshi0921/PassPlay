@@ -11,6 +11,7 @@
   --danger: #111111;
   --shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
   --radius: 18px;
+  --home-control-height: 96px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --visual-bottom: 0px;
@@ -229,7 +230,7 @@ body {
   gap: 10px;
 }
 #single-mode-panel.is-active {
-  padding-bottom: calc(54px + var(--safe-bottom));
+  padding-bottom: calc(var(--home-control-height) + var(--safe-bottom));
 }
 .mode-panel[hidden] {
   display: none;
@@ -330,7 +331,7 @@ body {
   box-shadow: 0 -8px 28px rgba(0,0,0,.22);
   border-radius: 20px 20px 0 0;
   padding: 0 12px calc(var(--safe-bottom) + var(--visual-bottom));
-  transform: translateY(calc(100% - 54px - var(--safe-bottom) - var(--visual-bottom)));
+  transform: translateY(calc(100% - var(--home-control-height) - var(--safe-bottom) - var(--visual-bottom)));
   transition: transform .24s cubic-bezier(.2,.75,.25,1);
   will-change: transform;
 }
@@ -338,9 +339,9 @@ body {
   transform: translateY(0);
 }
 .players-toggle {
-  flex: 0 0 54px;
+  flex: 0 0 var(--home-control-height);
   width: 100%;
-  min-height: 54px;
+  min-height: var(--home-control-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -564,6 +565,7 @@ body {
   box-shadow: var(--shadow);
   transform: translateY(calc(-1 * var(--keyboard-bottom)));
   transition: transform .2s ease;
+  min-height: var(--home-control-height);
 }
 .multi-profile label {
   display: block;
