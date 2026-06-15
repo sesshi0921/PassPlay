@@ -24,6 +24,14 @@
   const $modeButtons = [...document.querySelectorAll('[data-mode]')];
   const $modePanels = [...document.querySelectorAll('[data-mode-panel]')];
 
+  function syncVisualViewport() {
+    const viewport = window.visualViewport;
+    const bottomInset = viewport
+      ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)
+      : 0;
+    document.documentElement.style.setProperty('--visual-bottom', `${bottomInset}px`);
+  }
+
   function initialMode() {
     const queryMode = new URLSearchParams(window.location.search).get('mode');
     if (VALID_MODES.has(queryMode)) return queryMode;
@@ -228,7 +236,6 @@
   $playersToggle.addEventListener('click', () => {
     const open = !$playersSheet.classList.contains('is-open');
     setPlayersSheetOpen(open);
-    if (open) setTimeout(() => $input.focus(), 220);
   });
   $playersBackdrop.addEventListener('click', () => setPlayersSheetOpen(false));
   document.addEventListener('keydown', event => {
@@ -249,6 +256,10 @@
     });
   }
 
+  syncVisualViewport();
+  window.addEventListener('resize', syncVisualViewport);
+  window.visualViewport?.addEventListener('resize', syncVisualViewport);
+  window.visualViewport?.addEventListener('scroll', syncVisualViewport);
   selectMode(initialMode(), false);
   renderGames();
   renderPlayers();
