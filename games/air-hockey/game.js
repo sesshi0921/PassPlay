@@ -162,12 +162,12 @@ window.PassPlay.register(async api => {
 
   function drawGoalFlash(scorer) {
     draw();
-    ctx.fillStyle = scorer === 0 ? 'rgba(255,82,82,0.45)' : 'rgba(68,138,255,0.45)';
+    ctx.fillStyle = scorer === 0 ? 'rgba(164,55,48,0.42)' : 'rgba(48,83,123,0.42)';
     ctx.fillRect(0, 0, W, H);
     ctx.font = `bold ${W * 0.14}px -apple-system, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = '#fff9ea';
     ctx.shadowColor = 'rgba(0,0,0,0.5)';
     ctx.shadowBlur = 8;
     ctx.fillText('GOAL!', W / 2, H / 2);
@@ -177,29 +177,54 @@ window.PassPlay.register(async api => {
   function draw() {
     ctx.clearRect(0, 0, W, H);
 
-    // Background
-    ctx.fillStyle = '#0d2137';
-    ctx.fillRect(0, 0, W, H);
-
-    // Table surface gradient
-    const bg = ctx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0,   '#1a3a5c');
-    bg.addColorStop(0.5, '#163252');
-    bg.addColorStop(1,   '#1a3a5c');
+    // Wooden table surface
+    const bg = ctx.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, '#e4c18f');
+    bg.addColorStop(0.48, '#d4a96f');
+    bg.addColorStop(1, '#c8955d');
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
+
+    // Subtle, deterministic wood grain
+    ctx.save();
+    ctx.globalAlpha = 0.17;
+    ctx.strokeStyle = '#7b4c27';
+    ctx.lineWidth = 1.2;
+    for (let y = 22; y < H; y += 46) {
+      const bend = Math.sin(y * 0.035) * 13;
+      ctx.beginPath();
+      ctx.moveTo(-12, y);
+      ctx.bezierCurveTo(W * 0.25, y + bend, W * 0.7, y - bend, W + 12, y + bend * 0.35);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 0.1;
+    ctx.lineWidth = 3;
+    for (let y = 8; y < H; y += 138) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(W, y + 5);
+      ctx.stroke();
+    }
+    ctx.restore();
 
     const gl = goalLeft(), gr = goalRight();
     const goalDepth = H * 0.045;
     const POST_R = 7;
 
     // Goal zones
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    const goalShade = ctx.createLinearGradient(0, 0, 0, goalDepth);
+    goalShade.addColorStop(0, 'rgba(72,39,18,0.48)');
+    goalShade.addColorStop(1, 'rgba(72,39,18,0.08)');
+    ctx.fillStyle = goalShade;
     ctx.fillRect(gl, 0, GOAL_W, goalDepth);
-    ctx.fillRect(gl, H - goalDepth, GOAL_W, goalDepth);
+    ctx.save();
+    ctx.translate(0, H);
+    ctx.scale(1, -1);
+    ctx.fillRect(gl, 0, GOAL_W, goalDepth);
+    ctx.restore();
 
     // Goal lines
-    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+    ctx.strokeStyle = '#5e351b';
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(gl, 0);   ctx.lineTo(gl, goalDepth);
@@ -209,15 +234,28 @@ window.PassPlay.register(async api => {
     ctx.stroke();
 
     // Goal posts
-    ctx.fillStyle = '#aaccdd';
+    ctx.fillStyle = '#70401f';
     for (const px of [gl, gr]) {
       ctx.beginPath(); ctx.arc(px, 0, POST_R, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(px, H, POST_R, 0, Math.PI * 2); ctx.fill();
     }
 
+    // Dark wooden rails
+    const rail = Math.max(6, W * 0.018);
+    ctx.fillStyle = '#70421f';
+    ctx.fillRect(0, 0, rail, H);
+    ctx.fillRect(W - rail, 0, rail, H);
+    ctx.fillRect(0, 0, gl, rail);
+    ctx.fillRect(gr, 0, W - gr, rail);
+    ctx.fillRect(0, H - rail, gl, rail);
+    ctx.fillRect(gr, H - rail, W - gr, rail);
+    ctx.strokeStyle = 'rgba(255,244,218,.55)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(rail, rail, W - rail * 2, H - rail * 2);
+
     // Center line (dashed)
     ctx.setLineDash([10, 8]);
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.strokeStyle = 'rgba(93,52,26,0.5)';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2);
@@ -225,51 +263,93 @@ window.PassPlay.register(async api => {
     ctx.setLineDash([]);
 
     // Center circle
-    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(93,52,26,0.42)';
+    ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.arc(W / 2, H / 2, W * 0.15, 0, Math.PI * 2);
     ctx.stroke();
 
     // Paddles
-    const padColors = ['#ff5252', '#448aff'];
+    const padColors = [
+      ['#ef8c79', '#b84c42', '#7f2f2a'],
+      ['#84acd0', '#4d78a5', '#294b70'],
+    ];
     for (let i = 0; i < 2; i++) {
       const pad = state.paddles[i];
+      ctx.save();
+      ctx.shadowColor = 'rgba(72,39,18,.35)';
+      ctx.shadowBlur = 9;
+      ctx.shadowOffsetY = 6;
       const g = ctx.createRadialGradient(pad.x - PADDLE_R * 0.3, pad.y - PADDLE_R * 0.3, PADDLE_R * 0.1,
                                           pad.x, pad.y, PADDLE_R);
-      g.addColorStop(0, padColors[i] + 'ff');
-      g.addColorStop(1, padColors[i] + 'aa');
+      g.addColorStop(0, padColors[i][0]);
+      g.addColorStop(0.62, padColors[i][1]);
+      g.addColorStop(1, padColors[i][2]);
       ctx.beginPath();
       ctx.arc(pad.x, pad.y, PADDLE_R, 0, Math.PI * 2);
       ctx.fillStyle = g;
       ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,0.75)';
-      ctx.lineWidth = 2.5;
+      ctx.shadowColor = 'transparent';
+      ctx.strokeStyle = '#5a321d';
+      ctx.lineWidth = 3;
       ctx.stroke();
+      ctx.restore();
+
+      // Wooden concentric rings and grain
       ctx.beginPath();
       ctx.arc(pad.x, pad.y, PADDLE_R * 0.48, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(255,242,214,.48)';
+      ctx.lineWidth = 2;
       ctx.stroke();
       ctx.beginPath();
       ctx.arc(pad.x, pad.y, PADDLE_R * 0.15, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      ctx.fillStyle = 'rgba(255,242,214,.72)';
       ctx.fill();
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(pad.x, pad.y, PADDLE_R * 0.78, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.strokeStyle = 'rgba(80,40,22,.24)';
+      ctx.lineWidth = 1.2;
+      for (let offset = -0.45; offset <= 0.45; offset += 0.3) {
+        ctx.beginPath();
+        ctx.arc(
+          pad.x + PADDLE_R * offset,
+          pad.y,
+          PADDLE_R * (0.42 + Math.abs(offset) * 0.22),
+          -1.15,
+          1.15,
+        );
+        ctx.stroke();
+      }
+      ctx.restore();
     }
 
-    // Puck
+    // Pale wooden puck
     const p = state.puck;
+    ctx.save();
+    ctx.shadowColor = 'rgba(72,39,18,.35)';
+    ctx.shadowBlur = 7;
+    ctx.shadowOffsetY = 5;
     const pg = ctx.createRadialGradient(p.x - PUCK_R * 0.3, p.y - PUCK_R * 0.3, PUCK_R * 0.05,
                                          p.x, p.y, PUCK_R);
-    pg.addColorStop(0, '#ffffff');
-    pg.addColorStop(1, '#cccccc');
+    pg.addColorStop(0, '#fff8e7');
+    pg.addColorStop(0.65, '#e8d4ad');
+    pg.addColorStop(1, '#b98c58');
     ctx.beginPath();
     ctx.arc(p.x, p.y, PUCK_R, 0, Math.PI * 2);
     ctx.fillStyle = pg;
     ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-    ctx.lineWidth = 1;
+    ctx.shadowColor = 'transparent';
+    ctx.strokeStyle = '#6f431f';
+    ctx.lineWidth = 2;
     ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, PUCK_R * 0.58, -0.8, 2.4);
+    ctx.strokeStyle = 'rgba(111,67,31,.28)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    ctx.restore();
 
     // Scores & names
     drawHUD();
@@ -285,10 +365,10 @@ window.PassPlay.register(async api => {
     ctx.save();
     ctx.textAlign = 'left';
     ctx.font = `bold ${scoreSize}px -apple-system, sans-serif`;
-    ctx.fillStyle = '#ff7070';
+    ctx.fillStyle = '#9e332d';
     ctx.fillText(state.score[0], margin, H - H * 0.025);
     ctx.font = `${nameSize}px -apple-system, sans-serif`;
-    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.fillStyle = '#57341e';
     const n0 = state.players[0].length > 7 ? state.players[0].slice(0, 7) + '…' : state.players[0];
     ctx.fillText(n0, margin + scoreSize + 8, H - H * 0.025);
     ctx.restore();
@@ -299,10 +379,10 @@ window.PassPlay.register(async api => {
     ctx.rotate(Math.PI);
     ctx.textAlign = 'left';
     ctx.font = `bold ${scoreSize}px -apple-system, sans-serif`;
-    ctx.fillStyle = '#7ab0ff';
+    ctx.fillStyle = '#315d8b';
     ctx.fillText(state.score[1], margin, H - H * 0.025);
     ctx.font = `${nameSize}px -apple-system, sans-serif`;
-    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.fillStyle = '#57341e';
     const n1 = state.players[1].length > 7 ? state.players[1].slice(0, 7) + '…' : state.players[1];
     ctx.fillText(n1, margin + scoreSize + 8, H - H * 0.025);
     ctx.restore();

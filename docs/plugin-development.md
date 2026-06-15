@@ -51,6 +51,9 @@ games/example-game/
 <meta name="passplay-plugin-id" content="example-game">
 <meta name="passplay-api-version" content="1.0">
 
+<link rel="stylesheet" href="./style.css">
+<link rel="stylesheet" href="../../core/game-theme.css">
+
 <main data-passplay-plugin-root>
   <!-- ゲームUI -->
   <a href="../../index.html" data-passplay-home>トップへ戻る</a>
@@ -62,6 +65,8 @@ games/example-game/
 
 - プラグインIDはディレクトリ名と一致させます。
 - `data-passplay-plugin-root`は1つ以上必要です。
+- ゲーム固有CSSの後に`core/game-theme.css`を読み込みます。
+- 盤面などの固有レイアウトは`style.css`、背景・カード・ボタン・入力欄は共通テーマへ委ねます。
 - SDKはゲームスクリプトより先に読み込みます。
 - `data-passplay-home`付き要素はNavigation APIへ自動接続されます。
 
@@ -163,5 +168,5 @@ node build_games.js
 - 権限名
 - 宣言アセットの存在
 - エントリとアイコンが`assets`に含まれること
-- HTMLメタタグ、ルート要素、SDK読み込み
+- HTMLメタタグ、ルート要素、共通テーマ、SDK読み込み
 - `game.js`の`PassPlay.register()`登録

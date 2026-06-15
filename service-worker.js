@@ -12,6 +12,7 @@ const CORE_ASSETS = [
   './icon-192.png',
   './icon-512.png',
   './core/plugin-host.css',
+  './core/game-theme.css',
   './core/plugin-host.js',
   './core/plugin-sdk.js',
   './core/plugin-api.d.ts',

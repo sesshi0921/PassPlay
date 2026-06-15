@@ -72,15 +72,24 @@ function validateHtmlContract(id, entryPath) {
     })
   );
   const metas = tags('meta');
+  const links = tags('link');
   const scripts = tags('script');
   const pluginIdMeta = metas.find(attributes => attributes.name === 'passplay-plugin-id');
   const apiVersionMeta = metas.find(attributes => attributes.name === 'passplay-api-version');
+  const gameStyle = links.find(attributes => attributes.rel === 'stylesheet' && attributes.href === './style.css');
+  const sharedTheme = links.find(attributes => attributes.rel === 'stylesheet' && attributes.href === '../../core/game-theme.css');
   const sdkScript = scripts.find(attributes => attributes.src === '../../core/plugin-sdk.js');
   const gameScript = scripts.find(attributes => attributes.src === './game.js');
 
   assert(pluginIdMeta?.content === id, `${id}: HTMLのpassplay-plugin-idが不正です`);
   assert(apiVersionMeta?.content === API_VERSION, `${id}: HTMLのpassplay-api-versionが不正です`);
   assert(/\sdata-passplay-plugin-root(?:\s|>)/.test(html), `${id}: HTMLにdata-passplay-plugin-rootがありません`);
+  assert(gameStyle, `${id}: HTMLにstyle.cssの読み込みがありません`);
+  assert(sharedTheme, `${id}: HTMLにgame-theme.cssの読み込みがありません`);
+  assert(
+    html.indexOf('./style.css') < html.indexOf('../../core/game-theme.css'),
+    `${id}: game-theme.cssはゲーム固有style.cssより後に読み込んでください`,
+  );
   assert(sdkScript, `${id}: HTMLにplugin-sdk.jsの読み込みがありません`);
   assert(gameScript, `${id}: HTMLにgame.jsの読み込みがありません`);
   assert(

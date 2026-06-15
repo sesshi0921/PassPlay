@@ -1,0 +1,394 @@
+:root {
+  --pp-bg: #f2f2f0;
+  --pp-bg-2: #d9d9d5;
+  --pp-ink: #111111;
+  --pp-muted: #666662;
+  --pp-card: #ffffff;
+  --pp-line: #c9c9c5;
+  --pp-shadow: 7px 8px 0 rgba(17, 17, 17, .14);
+  --pp-shadow-soft: 0 8px 20px rgba(0, 0, 0, .14);
+  --pp-radius: 18px;
+
+  --bg: var(--pp-bg);
+  --bg-2: var(--pp-bg-2);
+  --card: var(--pp-card);
+  --card-2: #e7e7e3;
+  --text: var(--pp-ink);
+  --text-soft: var(--pp-muted);
+  --accent: var(--pp-ink);
+  --accent-strong: #000000;
+  --primary: #c8c8c4;
+  --primary-strong: var(--pp-ink);
+  --yellow: var(--pp-ink);
+  --part-color: var(--pp-ink);
+  --shadow: var(--pp-shadow-soft);
+  --radius: var(--pp-radius);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  background: var(--pp-bg);
+  color: var(--pp-ink);
+}
+
+body,
+body.phase-ki,
+body.phase-sho,
+body.phase-ten,
+body.phase-ketsu {
+  background:
+    radial-gradient(circle at 15% 0%, #ffffff 0, transparent 36%),
+    linear-gradient(180deg, var(--pp-bg) 0%, var(--pp-bg-2) 100%) !important;
+  color: var(--pp-ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+}
+
+.app {
+  position: relative;
+  isolation: isolate;
+  padding: calc(14px + var(--safe-top)) 14px calc(14px + var(--safe-bottom));
+}
+
+.app::before,
+.app::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  width: 110px;
+  height: 110px;
+  border: 1px solid rgba(17, 17, 17, .08);
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.7), rgba(180,180,176,.2));
+  box-shadow: 12px 14px 0 rgba(17,17,17,.05);
+  transform: rotate(18deg);
+  pointer-events: none;
+}
+
+.app::before {
+  top: 7%;
+  right: -54px;
+}
+
+.app::after {
+  bottom: 5%;
+  left: -62px;
+  transform: rotate(-22deg);
+}
+
+.phase:not([hidden]) {
+  min-height: 0;
+  gap: 14px;
+}
+
+.phase[data-phase="setup"]:not([hidden]),
+.phase[data-phase="result"]:not([hidden]) {
+  justify-content: center;
+}
+
+.phase[data-phase="setup"]:not([hidden]) {
+  align-items: center;
+}
+
+.phase[data-phase="setup"] .actions {
+  margin-top: auto;
+}
+
+.title {
+  color: var(--pp-ink) !important;
+  font-size: clamp(26px, 7vw, 34px);
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-shadow: none;
+}
+
+.title::after {
+  content: "";
+  display: block;
+  width: 48px;
+  height: 4px;
+  margin: 8px auto 0;
+  border-radius: 999px;
+  background: var(--pp-ink) !important;
+}
+
+.lead,
+.pass-sub,
+.write-sub,
+.input-part,
+.dist-label,
+.theme-note,
+.propose-sub,
+.reveal-sub,
+.vote-sub,
+.time-custom label,
+.result-body h3 {
+  color: var(--pp-muted) !important;
+}
+
+.pass-name,
+.reveal-sub span,
+.vote-sub span,
+.word-text,
+.timer,
+.theme-box {
+  color: var(--pp-ink) !important;
+}
+
+.info-box,
+.select-info,
+.dist-card,
+.theme-box,
+.time-custom,
+.word-card,
+.result-body,
+.story-display,
+.final-story,
+.reveal-story,
+.reveal-part,
+.propose-item {
+  background: var(--pp-card) !important;
+  color: var(--pp-ink) !important;
+  border: 1px solid var(--pp-line) !important;
+  border-radius: var(--pp-radius) !important;
+  box-shadow: var(--pp-shadow) !important;
+}
+
+.info-box {
+  width: 100%;
+  max-width: 360px;
+  padding: 15px 16px;
+}
+
+.info-box,
+.info-box * {
+  color: var(--pp-ink) !important;
+}
+
+.info-box ul {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.info-box li,
+.result-body .row,
+.score-line {
+  border-bottom-color: #dfdfdc !important;
+}
+
+.info-box .warn {
+  color: var(--pp-ink) !important;
+  font-weight: 800;
+}
+
+.actions {
+  width: 100%;
+  max-width: 360px;
+  gap: 9px;
+}
+
+.btn,
+.time-btn,
+.judge-player-btn,
+.vote-list li button {
+  min-height: 48px;
+  border: 2px solid var(--pp-ink) !important;
+  border-radius: 12px !important;
+  background: var(--pp-card) !important;
+  color: var(--pp-ink) !important;
+  box-shadow: 4px 5px 0 rgba(17, 17, 17, .16);
+  font-family: inherit;
+  font-weight: 800;
+  transition: transform .08s ease, box-shadow .08s ease;
+}
+
+.btn-primary,
+.btn-accent,
+.judge-player-btn.selected,
+.vote-list li button:active {
+  background: var(--pp-ink) !important;
+  color: #ffffff !important;
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, .6) !important;
+  color: var(--pp-ink) !important;
+}
+
+.btn:active,
+.time-btn:active,
+.judge-player-btn:active,
+.vote-list li button:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 3px 0 rgba(17, 17, 17, .16);
+}
+
+.btn:disabled,
+.judge-player-btn:disabled {
+  opacity: .42;
+  box-shadow: none;
+}
+
+input,
+textarea,
+.input-text,
+.write-input,
+.propose-input,
+.time-custom-row input {
+  border: 2px solid var(--pp-ink) !important;
+  border-radius: 12px !important;
+  background: var(--pp-card) !important;
+  color: var(--pp-ink) !important;
+  box-shadow: inset 0 1px 0 rgba(0,0,0,.04);
+  font-family: inherit;
+  outline: none;
+}
+
+input:focus,
+textarea:focus,
+.input-text:focus,
+.write-input:focus,
+.propose-input:focus,
+.time-custom-row input:focus {
+  box-shadow: 0 0 0 3px rgba(17,17,17,.16);
+}
+
+.word-card[data-state="hidden"] {
+  background:
+    repeating-linear-gradient(-45deg, #f8f8f5 0, #f8f8f5 9px, #e5e5e1 9px, #e5e5e1 10px) !important;
+}
+
+.word-card[data-state="shown"],
+.dist-number.revealed {
+  background: var(--pp-ink) !important;
+  color: #ffffff !important;
+}
+
+.word-card[data-state="shown"] .word-label,
+.word-card[data-state="shown"] .word-text,
+.dist-number.revealed .dist-shown {
+  color: #ffffff !important;
+}
+
+.dist-number {
+  border: 4px solid var(--pp-ink) !important;
+  background: var(--pp-card) !important;
+  color: var(--pp-ink) !important;
+  box-shadow: 7px 8px 0 rgba(17,17,17,.14);
+}
+
+.theme-box {
+  font-size: clamp(21px, 6vw, 28px);
+  font-weight: 900;
+}
+
+.timer {
+  padding: 12px 20px;
+  border: 3px solid var(--pp-ink);
+  border-radius: var(--pp-radius);
+  background: var(--pp-card);
+  box-shadow: var(--pp-shadow);
+  font-variant-numeric: tabular-nums;
+  text-shadow: none !important;
+}
+
+.timer.warning {
+  color: var(--pp-ink) !important;
+  background: #d8d8d4;
+}
+
+.judge-verdict,
+.result-body .verdict {
+  background: #ededE9 !important;
+  color: var(--pp-ink) !important;
+  border: 2px solid var(--pp-ink) !important;
+}
+
+.judge-verdict.success,
+.judge-verdict.fail,
+.result-body .verdict.win,
+.result-body .verdict.lose {
+  background: #ededE9 !important;
+  color: var(--pp-ink) !important;
+  border-color: var(--pp-ink) !important;
+}
+
+.result-body .big,
+.result-body .row .v {
+  color: var(--pp-ink) !important;
+}
+
+.story-display,
+.final-story .ki-text,
+.final-story .sho-text,
+.final-story .ten-text,
+.final-story .ketsu-text,
+.ki-text,
+.sho-text,
+.ten-text,
+.ketsu-text {
+  border-left-color: var(--pp-ink) !important;
+}
+
+.part-badge,
+.badge-ki,
+.badge-sho,
+.badge-ten,
+.badge-ketsu {
+  background: var(--pp-ink) !important;
+  color: #ffffff !important;
+}
+
+.haiku-display {
+  color: var(--pp-ink);
+}
+
+.reveal-hint {
+  color: var(--pp-muted) !important;
+}
+
+/* The Othello board and pieces intentionally keep their game colors. */
+html:has(meta[name="passplay-plugin-id"][content="othello"]) .board {
+  background: #1b5e20 !important;
+  border: 4px solid var(--pp-ink);
+  box-shadow: var(--pp-shadow);
+}
+
+html:has(meta[name="passplay-plugin-id"][content="othello"]) .cell {
+  background: #388e3c !important;
+}
+
+html:has(meta[name="passplay-plugin-id"][content="othello"]) .cell.valid {
+  background: rgba(200, 230, 201, .55) !important;
+}
+
+html:has(meta[name="passplay-plugin-id"][content="othello"]) .turn-label {
+  background: var(--pp-ink);
+  color: #ffffff !important;
+  border-radius: 999px;
+  padding: 4px 9px;
+}
+
+/* Air hockey uses its own wooden full-screen canvas. */
+html:has(meta[name="passplay-plugin-id"][content="air-hockey"]) [data-phase="play"] {
+  background: #c8955d !important;
+}
+
+html:has(meta[name="passplay-plugin-id"][content="air-hockey"]) #result-score {
+  color: var(--pp-ink) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
