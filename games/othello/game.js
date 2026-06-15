@@ -122,8 +122,12 @@ window.PassPlay.register(async api => {
     document.getElementById('score-bottom-white').querySelector('.count').textContent = whiteScore;
 
     const isBlackTurn = state.currentPlayer === BLACK;
-    document.getElementById('turn-top').textContent    = isBlackTurn ? '' : state.players[1] + ' のターン';
-    document.getElementById('turn-bottom').textContent = isBlackTurn ? state.players[0] + ' のターン' : '';
+    document.getElementById('turn-top').textContent = isBlackTurn
+      ? `${state.players[0]} のターン`
+      : 'あなたのターン';
+    document.getElementById('turn-bottom').textContent = isBlackTurn
+      ? 'あなたのターン'
+      : `${state.players[1]} のターン`;
 
     boardEl.innerHTML = '';
     const validMoves = getValidMoves(state.board, state.currentPlayer);
