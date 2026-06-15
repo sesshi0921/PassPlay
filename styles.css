@@ -233,6 +233,9 @@ body {
 #single-mode-panel.is-active {
   padding-bottom: calc(var(--home-control-height) + var(--home-control-bottom));
 }
+#multi-mode-panel.is-active {
+  padding-bottom: calc(var(--home-control-height) + var(--home-control-bottom));
+}
 .mode-panel[hidden] {
   display: none;
 }
@@ -317,12 +320,7 @@ body {
   pointer-events: none;
 }
 .players-section {
-  position: fixed;
-  left: 12px;
-  right: 12px;
-  bottom: var(--home-control-bottom);
   z-index: 50;
-  height: var(--home-control-height);
   max-height: var(--home-control-height);
   display: flex;
   flex-direction: column;
@@ -561,6 +559,12 @@ body {
 }
 
 .home-control-card {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: var(--home-control-bottom);
+  width: auto;
+  height: var(--home-control-height);
   min-height: var(--home-control-height);
   border: 1px solid #c8c8c4;
   border-radius: var(--radius);
@@ -569,10 +573,7 @@ body {
 }
 
 .multi-profile {
-  position: relative;
   z-index: 2;
-  flex: 0 0 auto;
-  height: var(--home-control-height);
   padding: 12px;
   transform: translateY(calc(-1 * var(--keyboard-bottom)));
   transition: transform .2s ease;
