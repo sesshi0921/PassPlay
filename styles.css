@@ -322,18 +322,20 @@ body {
   right: 12px;
   bottom: var(--home-control-bottom);
   z-index: 50;
-  height: min(70dvh, calc(100dvh - var(--home-control-bottom)));
-  max-height: min(70dvh, calc(100dvh - var(--home-control-bottom)));
+  height: var(--home-control-height);
+  max-height: var(--home-control-height);
   display: flex;
   flex-direction: column;
   padding: 0 12px;
-  transform: translateY(calc(100% - var(--home-control-height)));
+  overflow: hidden;
   transition:
-    transform .24s cubic-bezier(.2,.75,.25,1),
-    inset .24s cubic-bezier(.2,.75,.25,1),
+    left .24s cubic-bezier(.2,.75,.25,1),
+    right .24s cubic-bezier(.2,.75,.25,1),
+    bottom .24s cubic-bezier(.2,.75,.25,1),
     height .24s cubic-bezier(.2,.75,.25,1),
+    max-height .24s cubic-bezier(.2,.75,.25,1),
     border-radius .24s ease;
-  will-change: transform;
+  will-change: height;
 }
 .players-section.is-open {
   left: 10px;
@@ -345,7 +347,6 @@ body {
   border-bottom: 0;
   border-radius: 20px 20px 0 0;
   box-shadow: 0 -8px 28px rgba(0,0,0,.22);
-  transform: translateY(0);
 }
 .players-toggle {
   flex: 0 0 var(--home-control-height);
