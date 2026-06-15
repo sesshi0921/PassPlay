@@ -12,12 +12,20 @@
   --shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
   --radius: 18px;
   --home-control-height: 96px;
-  --home-control-bottom: calc(8px + var(--viewport-bottom));
+  --home-control-gap: 8px;
+  --home-control-bottom: calc(var(--home-control-gap) + var(--viewport-bottom) - var(--pwa-top-compensation));
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --visual-bottom: 0px;
   --keyboard-bottom: 0px;
   --viewport-bottom: 0px;
+  --pwa-top-compensation: 0px;
+}
+
+@media (display-mode: standalone) {
+  :root {
+    --pwa-top-compensation: var(--safe-top);
+  }
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -51,7 +59,7 @@ body {
   position: fixed;
   top: 0;
   right: 0;
-  bottom: calc(-1 * var(--safe-bottom));
+  bottom: calc(0px - var(--safe-bottom) - var(--pwa-top-compensation));
   left: 0;
   display: flex;
   flex-direction: column;
@@ -235,10 +243,10 @@ body {
   gap: 10px;
 }
 #single-mode-panel.is-active {
-  padding-bottom: calc(var(--home-control-height) + var(--home-control-bottom));
+  padding-bottom: calc(var(--home-control-height) + var(--home-control-gap));
 }
 #multi-mode-panel.is-active {
-  padding-bottom: calc(var(--home-control-height) + var(--home-control-bottom));
+  padding-bottom: calc(var(--home-control-height) + var(--home-control-gap));
 }
 .mode-panel[hidden] {
   display: none;
