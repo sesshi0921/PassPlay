@@ -3,6 +3,7 @@
 
   const STORAGE_KEY = 'passplay.players';
   const MODE_STORAGE_KEY = 'passplay.mode';
+  const MULTI_USERNAME_STORAGE_KEY = 'passplay.multi.username';
   const DEFAULT_MODE = 'single';
   const VALID_MODES = new Set(['single', 'multi']);
   const MAX_PLAYERS = 16;
@@ -17,6 +18,7 @@
   const $playersToggle = document.getElementById('players-toggle');
   const $playersBackdrop = document.getElementById('players-backdrop');
   const $playersSheetContent = document.getElementById('players-sheet-content');
+  const $multiUsername = document.getElementById('multi-username');
   const $marqueeRows = [
     document.getElementById('icon-marquee-row-1'),
     document.getElementById('icon-marquee-row-2'),
@@ -82,6 +84,14 @@
   }
   function savePlayers(players) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(players));
+  }
+
+  function loadMultiUsername() {
+    return localStorage.getItem(MULTI_USERNAME_STORAGE_KEY) || '';
+  }
+
+  function saveMultiUsername(username) {
+    localStorage.setItem(MULTI_USERNAME_STORAGE_KEY, username);
   }
 
   // トースト
@@ -243,6 +253,21 @@
     addPlayer($input.value);
     $input.value = '';
     $input.focus();
+  });
+
+  $multiUsername.value = loadMultiUsername();
+  $multiUsername.addEventListener('input', () => {
+    saveMultiUsername($multiUsername.value.trimStart());
+  });
+  $multiUsername.addEventListener('blur', () => {
+    const username = $multiUsername.value.trim();
+    $multiUsername.value = username;
+    saveMultiUsername(username);
+  });
+  $multiUsername.addEventListener('focus', () => {
+    requestAnimationFrame(() => {
+      $multiUsername.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
   });
 
   $playersToggle.addEventListener('click', () => {
