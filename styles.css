@@ -66,7 +66,7 @@ body {
   width: 100%;
   height: auto;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   padding: calc(8px + var(--safe-top)) 12px calc(8px + var(--safe-bottom));
   background:
     radial-gradient(circle at 15% 0%, #ffffff 0, transparent 36%),
