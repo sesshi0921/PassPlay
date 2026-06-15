@@ -115,6 +115,17 @@
     }
   }
 
+  function sortGamesByMinimumPlayers(games) {
+    return games
+      .map((game, index) => ({ game, index }))
+      .sort((a, b) => {
+        const aMin = Number.isFinite(Number(a.game.min)) ? Number(a.game.min) : Infinity;
+        const bMin = Number.isFinite(Number(b.game.min)) ? Number(b.game.min) : Infinity;
+        return aMin - bMin || a.index - b.index;
+      })
+      .map(({ game }) => game);
+  }
+
   async function renderGames() {
     let games = [];
     try {
@@ -127,15 +138,16 @@
     }
 
     renderMarquee(games);
+    const sortedGames = sortGamesByMinimumPlayers(games);
     $grid.innerHTML = '';
-    if (games.length === 0) {
+    if (sortedGames.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'game-card empty';
       empty.textContent = 'ゲーム未登録';
       $grid.appendChild(empty);
       return;
     }
-    for (const g of games) {
+    for (const g of sortedGames) {
       const a = document.createElement('a');
       a.className = 'game-card';
       a.href = `./play.html?game=${encodeURIComponent(g.id)}`;
