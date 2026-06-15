@@ -65,13 +65,25 @@
       <div id="games-grid" class="games-grid" aria-live="polite"></div>
     </section>
 
-    <section class="players-section">
-      <h2 class="section-title">プレーヤー <span id="players-count" class="count">0</span></h2>
-      <form id="player-form" class="player-form" autocomplete="off">
-        <input id="player-input" class="player-input" type="text" placeholder="名前を入力" maxlength="16" required>
-        <button class="btn-add" type="submit">追加</button>
-      </form>
-      <ul id="players-list" class="players-list"></ul>
+    <div id="players-backdrop" class="players-backdrop" hidden></div>
+    <section id="players-sheet" class="players-section" aria-labelledby="players-toggle-label">
+      <button
+        id="players-toggle"
+        class="players-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="players-sheet-content"
+      >
+        <span id="players-toggle-label">プレイヤー <strong id="players-count">0</strong>人</span>
+        <span class="players-toggle-icon" aria-hidden="true"></span>
+      </button>
+      <div id="players-sheet-content" class="players-sheet-content" aria-hidden="true" inert>
+        <form id="player-form" class="player-form" autocomplete="off">
+          <input id="player-input" class="player-input" type="text" placeholder="名前を入力" maxlength="16" required>
+          <button class="btn-add" type="submit">追加</button>
+        </form>
+        <ul id="players-list" class="players-list"></ul>
+      </div>
     </section>
   </div>
 

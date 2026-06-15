@@ -13,6 +13,10 @@
   const $count = document.getElementById('players-count');
   const $form = document.getElementById('player-form');
   const $input = document.getElementById('player-input');
+  const $playersSheet = document.getElementById('players-sheet');
+  const $playersToggle = document.getElementById('players-toggle');
+  const $playersBackdrop = document.getElementById('players-backdrop');
+  const $playersSheetContent = document.getElementById('players-sheet-content');
   const $marqueeRows = [
     document.getElementById('icon-marquee-row-1'),
     document.getElementById('icon-marquee-row-2'),
@@ -29,6 +33,7 @@
 
   function selectMode(mode, updateUrl = true) {
     const selectedMode = VALID_MODES.has(mode) ? mode : DEFAULT_MODE;
+    if (selectedMode !== 'single') setPlayersSheetOpen(false);
     for (const button of $modeButtons) {
       const selected = button.dataset.mode === selectedMode;
       button.setAttribute('aria-selected', String(selected));
@@ -46,6 +51,15 @@
       url.searchParams.set('mode', selectedMode);
       history.replaceState(null, '', url);
     }
+  }
+
+  function setPlayersSheetOpen(open) {
+    $playersSheet.classList.toggle('is-open', open);
+    $playersToggle.setAttribute('aria-expanded', String(open));
+    $playersBackdrop.hidden = !open;
+    $playersSheetContent.inert = !open;
+    $playersSheetContent.setAttribute('aria-hidden', String(!open));
+    document.body.classList.toggle('players-sheet-open', open);
   }
 
   // プレーヤー永続化
@@ -209,6 +223,19 @@
     addPlayer($input.value);
     $input.value = '';
     $input.focus();
+  });
+
+  $playersToggle.addEventListener('click', () => {
+    const open = !$playersSheet.classList.contains('is-open');
+    setPlayersSheetOpen(open);
+    if (open) setTimeout(() => $input.focus(), 220);
+  });
+  $playersBackdrop.addEventListener('click', () => setPlayersSheetOpen(false));
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && $playersSheet.classList.contains('is-open')) {
+      setPlayersSheetOpen(false);
+      $playersToggle.focus();
+    }
   });
 
   for (const button of $modeButtons) {
