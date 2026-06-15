@@ -14,6 +14,7 @@
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --visual-bottom: 0px;
+  --keyboard-bottom: 0px;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -21,10 +22,16 @@
 html, body {
   margin: 0;
   padding: 0;
-  height: 100dvh;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
   overflow: hidden;
   overscroll-behavior: none;
   touch-action: pan-x pan-y;
+}
+
+html {
+  background: var(--bg-2);
 }
 
 body {
@@ -38,10 +45,18 @@ body {
 }
 
 .app {
+  position: fixed;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  width: 100%;
+  height: auto;
+  min-height: 100%;
+  overflow: hidden;
   padding: calc(8px + var(--safe-top)) 12px calc(8px + var(--safe-bottom));
+  background:
+    radial-gradient(circle at 15% 0%, #ffffff 0, transparent 36%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
   gap: 10px;
 }
 
@@ -547,7 +562,7 @@ body {
   border-radius: var(--radius);
   background: rgba(248,248,246,.98);
   box-shadow: var(--shadow);
-  transform: translateY(calc(-1 * var(--visual-bottom)));
+  transform: translateY(calc(-1 * var(--keyboard-bottom)));
   transition: transform .2s ease;
 }
 .multi-profile label {

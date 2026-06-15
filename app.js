@@ -31,7 +31,9 @@
     const bottomInset = viewport
       ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)
       : 0;
+    const keyboardInset = bottomInset >= 150 ? bottomInset : 0;
     document.documentElement.style.setProperty('--visual-bottom', `${bottomInset}px`);
+    document.documentElement.style.setProperty('--keyboard-bottom', `${keyboardInset}px`);
   }
 
   function initialMode() {
