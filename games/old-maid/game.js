@@ -24,6 +24,9 @@ window.PassPlay.register(async api => {
     previousSnapshot: null,
     selectedTargetSlot: null,
     lastTargetTapAt: 0,
+    selectedPairCardIds: [],
+    pairSelectionDeadline: 0,
+    pairSelectionTimer: null,
     removalAnim: null,
     drawAnim: null,
   };
@@ -50,7 +53,7 @@ window.PassPlay.register(async api => {
   const $pairingOverlay = document.getElementById('pairing-overlay');
   const $pairingTitle = document.getElementById('pairing-title');
   const $pairingNote = document.getElementById('pairing-note');
-  const $pairingPairs = document.getElementById('pairing-pairs');
+  const $pairingTimer = document.getElementById('pairing-timer');
   const $pairingReady = document.getElementById('pairing-ready');
   const $drawAnimationCard = document.getElementById('draw-animation-card');
   const $resultSummary = document.getElementById('result-summary');
@@ -301,7 +304,10 @@ window.PassPlay.register(async api => {
   function renderPairing(snapshot) {
     const isPairing = snapshot.phase === 'pairing';
     $pairingOverlay.hidden = !isPairing;
-    if (!isPairing) return;
+    if (!isPairing) {
+      clearPairSelection();
+      return;
+    }
 
     const previousPhase = state.previousSnapshot?.phase;
     const allReady = (snapshot.publicState?.pairReadyPlayerIds || []).length === snapshot.players.length;
@@ -314,25 +320,17 @@ window.PassPlay.register(async api => {
       ? '全員の準備が終わりました。ランダムに先手を選んでいます。'
       : snapshot.privateState?.pairReady
         ? 'あなたは準備完了です。ほかのプレイヤーを待っています。'
-        : '同じ数字の2枚をクリックして捨ててください。マウスでも操作できます。';
-
-    $pairingPairs.innerHTML = '';
-    for (const pair of snapshot.privateState?.availablePairs || []) {
-      const button = document.createElement('button');
-      button.className = 'pair-chip';
-      button.type = 'button';
-      button.textContent = `${pair[0].label} / ${pair[1].label}`;
-      button.disabled = !!snapshot.privateState?.pairReady;
-      button.addEventListener('click', () => act('discard-pairs', { cardIds: pair.map(card => card.cardId) }));
-      $pairingPairs.appendChild(button);
-    }
+        : '手札から2枚を上げて、もう一度そのカードをクリックすると捨てられます。';
 
     $pairingReady.disabled = !snapshot.privateState?.canReadyPairs || !!snapshot.privateState?.pairReady;
-    if (($pairingPairs.children.length === 0) && !snapshot.privateState?.pairReady && snapshot.privateState?.canReadyPairs) {
-      const row = document.createElement('div');
-      row.className = 'pairing-empty';
-      row.textContent = '捨てる札はありません';
-      $pairingPairs.appendChild(row);
+    if (snapshot.privateState?.pairReady) {
+      clearPairSelection();
+      $pairingTimer.textContent = 'OK';
+    } else if (state.selectedPairCardIds.length > 0) {
+      ensurePairSelectionTimer();
+      renderPairSelectionTimer();
+    } else {
+      $pairingTimer.textContent = snapshot.privateState?.canReadyPairs ? 'READY' : '15';
     }
   }
 
@@ -342,9 +340,9 @@ window.PassPlay.register(async api => {
       const button = document.createElement('button');
       button.className = 'hand-card';
       button.style.setProperty('--card-index', String(index));
-      if (card.appealing) button.classList.add('appealing');
+      if (card.appealing || state.selectedPairCardIds.includes(card.cardId)) button.classList.add('appealing');
       button.type = 'button';
-      button.addEventListener('click', () => toggleAppeal(state.snapshot, card.cardId));
+      button.addEventListener('click', () => handleHandCardClick(card.cardId));
 
       const label = document.createElement('span');
       label.className = 'hand-card-name';
@@ -463,9 +461,77 @@ window.PassPlay.register(async api => {
     if (state.snapshot?.phase === 'playing') renderPlay(state.snapshot);
   }
 
+  function handleHandCardClick(cardId) {
+    if (!state.snapshot) return;
+    if (state.snapshot.phase === 'pairing') {
+      handlePairCardClick(cardId);
+      return;
+    }
+    toggleAppeal(state.snapshot, cardId);
+  }
+
+  function handlePairCardClick(cardId) {
+    const hand = state.snapshot?.privateState?.hand || [];
+    const card = hand.find(current => current.cardId === cardId);
+    if (!card) return;
+
+    if (state.selectedPairCardIds.includes(cardId)) {
+      if (state.selectedPairCardIds.length === 2 && isDiscardablePair(hand, state.selectedPairCardIds)) {
+        act('discard-pairs', { cardIds: state.selectedPairCardIds.slice() });
+      } else {
+        state.selectedPairCardIds = state.selectedPairCardIds.filter(id => id !== cardId);
+        if (state.selectedPairCardIds.length === 0) clearPairSelection();
+      }
+      renderPlay(state.snapshot);
+      return;
+    }
+
+    if (state.selectedPairCardIds.length >= 2) {
+      clearPairSelection();
+    }
+    state.selectedPairCardIds = state.selectedPairCardIds.concat(cardId);
+    ensurePairSelectionTimer();
+    renderPlay(state.snapshot);
+  }
+
+  function isDiscardablePair(hand, cardIds) {
+    if (cardIds.length !== 2) return false;
+    const cards = cardIds.map(id => hand.find(card => card.cardId === id)).filter(Boolean);
+    if (cards.length !== 2) return false;
+    const left = cards[0].label.replace(/[♠♣♥♦]/g, '');
+    const right = cards[1].label.replace(/[♠♣♥♦]/g, '');
+    return left === right && left !== 'JOKER';
+  }
+
+  function ensurePairSelectionTimer() {
+    state.pairSelectionDeadline = Date.now() + 15000;
+    clearInterval(state.pairSelectionTimer);
+    state.pairSelectionTimer = window.setInterval(() => {
+      renderPairSelectionTimer();
+      if (Date.now() >= state.pairSelectionDeadline) {
+        clearPairSelection();
+        if (state.snapshot?.phase === 'pairing') renderPlay(state.snapshot);
+      }
+    }, 250);
+  }
+
+  function renderPairSelectionTimer() {
+    if (!state.pairSelectionDeadline) return;
+    const remainMs = Math.max(0, state.pairSelectionDeadline - Date.now());
+    $pairingTimer.textContent = `${Math.ceil(remainMs / 1000)}`;
+  }
+
+  function clearPairSelection() {
+    state.selectedPairCardIds = [];
+    state.pairSelectionDeadline = 0;
+    clearInterval(state.pairSelectionTimer);
+    state.pairSelectionTimer = null;
+  }
+
   async function act(type, payload) {
     try {
       const snapshot = await api.room.action({ type, payload });
+      if (type === 'discard-pairs') clearPairSelection();
       setSnapshot(snapshot);
     } catch (error) {
       setError(error.message);
@@ -575,6 +641,7 @@ window.PassPlay.register(async api => {
     state.previousSnapshot = null;
     state.selectedTargetSlot = null;
     state.lastTargetTapAt = 0;
+    clearPairSelection();
     state.removalAnim = null;
     state.drawAnim = null;
     show('setup');
