@@ -429,8 +429,10 @@ export class PassPlayRoom {
         turnOrder: this.room.turnOrder.slice(),
         discardPile: (this.room.discardPile || []).slice(-12),
         lastMove: this.room.lastMove || null,
+        dealStartedAt: this.room.dealStartedAt || null,
         phase: this.room.phase,
         result: this.room.result,
+        pairReadyPlayerIds: this.room.players.filter(current => current.pairReady).map(current => current.id),
         canStart: this.room.phase === 'waiting' && this.room.players.length >= GAME_DEFINITIONS[this.room.gameId]?.minPlayers,
         transportUrls: {
           http: `${origin}/api`,
@@ -443,6 +445,12 @@ export class PassPlayRoom {
           label: cardLabel(cardId),
           appealing: player.appeal.includes(cardId),
         })),
+        availablePairs: findAvailablePairs(player.hand).map(pair => pair.map(cardId => ({
+          cardId,
+          label: cardLabel(cardId),
+        }))),
+        pairReady: !!player.pairReady,
+        canReadyPairs: this.room.phase === 'pairing' && findAvailablePairs(player.hand).length === 0,
         canStart: player.isHost && this.room.phase === 'waiting' && this.room.players.length >= GAME_DEFINITIONS[this.room.gameId]?.minPlayers,
         canDraw: this.room.phase === 'playing' && this.room.turnPlayerId === player.id,
       } : null,
@@ -599,6 +607,14 @@ function applyRoomAction(room, playerId, action) {
     player.appeal = unique;
     return;
   }
+  if (action.type === 'discard-pairs') {
+    applyPairDiscard(room, playerId, Array.isArray(action.payload?.cardIds) ? action.payload.cardIds : []);
+    return;
+  }
+  if (action.type === 'ready-play') {
+    applyPairReady(room, playerId);
+    return;
+  }
   if (action.type === 'draw-card') {
     applyOldMaidDraw(room, playerId, Number(action.payload?.slot));
     return;
@@ -610,8 +626,8 @@ function startOldMaid(room) {
   const order = shuffle(room.players.map(player => player.id));
   const deck = shuffle(createDeck());
   room.turnOrder = order;
-  room.turnPlayerId = order[0];
-  room.phase = 'playing';
+  room.turnPlayerId = null;
+  room.phase = 'pairing';
   room.result = null;
   room.discardPile = [];
   room.lastMove = null;
@@ -621,24 +637,56 @@ function startOldMaid(room) {
     player.isOut = false;
     player.finishOrder = null;
     player.isConnected = true;
+    player.pairReady = false;
   }
   deck.forEach((card, index) => {
     const owner = findPlayer(room, order[index % order.length]);
     owner.hand.push(card);
   });
   for (const player of room.players) {
-    const resolved = resolveHand(player.hand);
-    player.hand = resolved.hand;
-    pushDiscardPile(room, player.id, resolved.removed, 'deal');
+    sortHand(player.hand);
   }
-  assignFinishedPlayers(room);
-  maybeFinishRoom(room);
-  if (room.turnPlayerId && findPlayer(room, room.turnPlayerId).isOut) {
-    room.turnPlayerId = getNextTurnPlayer(room, room.turnPlayerId);
-  }
-  if (room.turnPlayerId) {
-    const turnPlayer = findPlayer(room, room.turnPlayerId);
-    turnPlayer.turnStartedAt = Date.now();
+  room.dealStartedAt = Date.now();
+}
+
+function applyPairDiscard(room, playerId, cardIds) {
+  if (room.phase !== 'pairing') throw new Error('pairing is not active');
+  const player = findPlayer(room, playerId);
+  if (player.pairReady) throw new Error('already ready');
+  if (!Array.isArray(cardIds) || cardIds.length !== 2) throw new Error('exactly two cards required');
+  if (!player.hand.includes(cardIds[0]) || !player.hand.includes(cardIds[1])) throw new Error('card not in hand');
+  const left = cardIds[0].split('-')[0];
+  const right = cardIds[1].split('-')[0];
+  if (left !== right || left === 'JOKER') throw new Error('pair ranks must match');
+  player.hand = player.hand.filter(cardId => !cardIds.includes(cardId));
+  player.appeal = player.appeal.filter(cardId => player.hand.includes(cardId));
+  pushDiscardPile(room, player.id, cardIds, 'manual-pair');
+  sortHand(player.hand);
+}
+
+function applyPairReady(room, playerId) {
+  if (room.phase !== 'pairing') throw new Error('pairing is not active');
+  const player = findPlayer(room, playerId);
+  if (findAvailablePairs(player.hand).length > 0) throw new Error('pairs remain in hand');
+  player.pairReady = true;
+  if (room.players.every(current => current.pairReady)) {
+    room.phase = 'playing';
+    const active = room.turnOrder.filter(id => {
+      const candidate = findPlayer(room, id);
+      return candidate.hand.length > 0;
+    });
+    room.turnPlayerId = active.length ? active[randomInt(active.length)] : room.turnOrder[0] || null;
+    room.lastMove = {
+      type: 'starter-selected',
+      starterPlayerId: room.turnPlayerId,
+      at: Date.now(),
+    };
+    assignFinishedPlayers(room);
+    maybeFinishRoom(room);
+    if (room.turnPlayerId) {
+      const turnPlayer = findPlayer(room, room.turnPlayerId);
+      turnPlayer.turnStartedAt = Date.now();
+    }
   }
 }
 
@@ -821,6 +869,24 @@ function pushDiscardPile(room, ownerPlayerId, removedCards, reason) {
     at: Date.now(),
   });
   room.discardPile = room.discardPile.slice(-12);
+}
+
+function findAvailablePairs(hand) {
+  const groups = new Map();
+  for (const cardId of hand) {
+    const rank = cardId.split('-')[0];
+    if (rank === 'JOKER') continue;
+    const cards = groups.get(rank) || [];
+    cards.push(cardId);
+    groups.set(rank, cards);
+  }
+  const pairs = [];
+  for (const cards of groups.values()) {
+    for (let index = 0; index + 1 < cards.length; index += 2) {
+      pairs.push([cards[index], cards[index + 1]]);
+    }
+  }
+  return pairs;
 }
 
 function validateGame(gameId) {

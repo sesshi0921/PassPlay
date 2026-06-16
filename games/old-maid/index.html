@@ -86,6 +86,16 @@
   <section class="phase" data-phase="play" hidden>
     <div class="play-shell board-shell">
       <div id="selection-popup" class="selection-popup" hidden></div>
+      <div id="pairing-overlay" class="pairing-overlay" hidden>
+        <div class="pairing-copy">
+          <h3 id="pairing-title">手札を配っています...</h3>
+          <p id="pairing-note">そろった数字を自分で捨ててください。</p>
+        </div>
+        <div id="pairing-pairs" class="pairing-pairs"></div>
+        <div class="actions pairing-actions">
+          <button id="pairing-ready" class="btn btn-primary" type="button">準備完了</button>
+        </div>
+      </div>
 
       <div class="info-box table-shell">
         <div class="table-head">

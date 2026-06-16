@@ -47,6 +47,11 @@ window.PassPlay.register(async api => {
   const $handOverlay = document.getElementById('hand-overlay');
   const $discardPile = document.getElementById('discard-pile');
   const $selectionPopup = document.getElementById('selection-popup');
+  const $pairingOverlay = document.getElementById('pairing-overlay');
+  const $pairingTitle = document.getElementById('pairing-title');
+  const $pairingNote = document.getElementById('pairing-note');
+  const $pairingPairs = document.getElementById('pairing-pairs');
+  const $pairingReady = document.getElementById('pairing-ready');
   const $drawAnimationCard = document.getElementById('draw-animation-card');
   const $resultSummary = document.getElementById('result-summary');
 
@@ -141,7 +146,7 @@ window.PassPlay.register(async api => {
     const isWaiting = snapshot.phase === 'waiting';
     const isFinished = snapshot.phase === 'finished';
     if (isWaiting) show('room');
-    if (snapshot.phase === 'playing') show('play');
+    if (snapshot.phase === 'pairing' || snapshot.phase === 'playing') show('play');
     if (isFinished) show('result');
 
     $roomCode.textContent = snapshot.roomLabel || snapshot.roomId;
@@ -168,9 +173,14 @@ window.PassPlay.register(async api => {
     const selectingMine = publicState.targetPlayerId === me?.playerId
       && publicState.turnPlayerId
       && publicState.turnPlayerId !== me?.playerId;
+    const isPairing = snapshot.phase === 'pairing';
 
-    $turnLabel.textContent = isMyTurn ? 'あなたのターン' : `${nameById(snapshot, publicState.turnPlayerId)} のターン`;
-    $targetLabel.textContent = isMyTurn && targetPlayer
+    $turnLabel.textContent = isPairing
+      ? '手札の準備'
+      : isMyTurn ? 'あなたのターン' : `${nameById(snapshot, publicState.turnPlayerId)} のターン`;
+    $targetLabel.textContent = isPairing
+      ? 'そろった数字を捨ててから全員の準備完了を待ちます'
+      : isMyTurn && targetPlayer
       ? `${targetPlayer.name} の手札をダブルタップして引きます`
       : selectingMine
         ? `${nameById(snapshot, publicState.turnPlayerId)} があなたのカードを選んでいます...`
@@ -183,6 +193,7 @@ window.PassPlay.register(async api => {
       ? `${nameById(snapshot, publicState.turnPlayerId)} があなたのカードを選んでいます...`
       : '';
 
+    renderPairing(snapshot);
     renderRing(snapshot, me?.playerId);
     renderDiscardPile(publicState.discardPile || []);
     renderTargetStack(snapshot, targetPlayer);
@@ -259,6 +270,11 @@ window.PassPlay.register(async api => {
   }
 
   function renderTargetStack(snapshot, targetPlayer) {
+    if (snapshot.phase !== 'playing') {
+      $targetPanel.hidden = true;
+      $targetHand.innerHTML = '';
+      return;
+    }
     const canDraw = !!snapshot.privateState?.canDraw;
     $targetPanel.hidden = !targetPlayer;
     $targetHand.innerHTML = '';
@@ -279,6 +295,44 @@ window.PassPlay.register(async api => {
     if (!canDraw) {
       state.selectedTargetSlot = null;
       state.lastTargetTapAt = 0;
+    }
+  }
+
+  function renderPairing(snapshot) {
+    const isPairing = snapshot.phase === 'pairing';
+    $pairingOverlay.hidden = !isPairing;
+    if (!isPairing) return;
+
+    const previousPhase = state.previousSnapshot?.phase;
+    const allReady = (snapshot.publicState?.pairReadyPlayerIds || []).length === snapshot.players.length;
+    $pairingTitle.textContent = previousPhase === 'waiting'
+      ? '手札を配っています...'
+      : allReady
+        ? '先手を決めています...'
+        : 'そろった札を捨ててください';
+    $pairingNote.textContent = allReady
+      ? '全員の準備が終わりました。ランダムに先手を選んでいます。'
+      : snapshot.privateState?.pairReady
+        ? 'あなたは準備完了です。ほかのプレイヤーを待っています。'
+        : '同じ数字の2枚をクリックして捨ててください。マウスでも操作できます。';
+
+    $pairingPairs.innerHTML = '';
+    for (const pair of snapshot.privateState?.availablePairs || []) {
+      const button = document.createElement('button');
+      button.className = 'pair-chip';
+      button.type = 'button';
+      button.textContent = `${pair[0].label} / ${pair[1].label}`;
+      button.disabled = !!snapshot.privateState?.pairReady;
+      button.addEventListener('click', () => act('discard-pairs', { cardIds: pair.map(card => card.cardId) }));
+      $pairingPairs.appendChild(button);
+    }
+
+    $pairingReady.disabled = !snapshot.privateState?.canReadyPairs || !!snapshot.privateState?.pairReady;
+    if (($pairingPairs.children.length === 0) && !snapshot.privateState?.pairReady && snapshot.privateState?.canReadyPairs) {
+      const row = document.createElement('div');
+      row.className = 'pairing-empty';
+      row.textContent = '捨てる札はありません';
+      $pairingPairs.appendChild(row);
     }
   }
 
@@ -395,6 +449,17 @@ window.PassPlay.register(async api => {
     const nextMove = nextSnapshot?.publicState?.lastMove;
     if (!nextMove || nextMove.at === previousMoveAt) return;
 
+    if (nextMove.type === 'starter-selected') {
+      state.drawAnim = { cardLabel: `${nameById(nextSnapshot, nextMove.starterPlayerId)} が先手`, at: nextMove.at };
+      window.setTimeout(() => {
+        if (state.drawAnim?.at === nextMove.at) {
+          state.drawAnim = null;
+          if (state.snapshot?.phase === 'playing') renderPlay(state.snapshot);
+        }
+      }, 1200);
+      return;
+    }
+
     if (nextMove.targetPlayerId === nextSnapshot?.me?.playerId) {
       const previousHand = previousSnapshot?.privateState?.hand || [];
       const removedCard = previousHand[nextMove.targetSlot];
@@ -456,6 +521,13 @@ window.PassPlay.register(async api => {
   document.getElementById('start-game').addEventListener('click', async () => {
     try {
       setSnapshot(await api.room.start());
+    } catch (error) {
+      setError(error.message);
+    }
+  });
+  $pairingReady.addEventListener('click', async () => {
+    try {
+      setSnapshot(await api.room.action({ type: 'ready-play' }));
     } catch (error) {
       setError(error.message);
     }

@@ -315,6 +315,63 @@ body {
   box-shadow: 0 10px 24px rgba(0, 0, 0, .18);
 }
 
+.pairing-overlay {
+  width: 100%;
+  max-width: 360px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .92);
+  border: 1px solid rgba(17, 17, 17, .12);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .12);
+}
+
+.pairing-copy h3,
+.pairing-copy p {
+  margin: 0;
+}
+
+.pairing-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pairing-copy h3 {
+  font-size: 18px;
+}
+
+.pairing-copy p,
+.pairing-empty {
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.pairing-pairs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.pair-chip {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 2px solid #111;
+  border-radius: 999px;
+  background: #fff;
+  font: inherit;
+  font-weight: 800;
+  color: #111;
+}
+
+.pair-chip:disabled {
+  opacity: .5;
+}
+
+.pairing-actions {
+  margin-top: 10px;
+}
+
 .table-shell {
   position: relative;
   padding-bottom: 18px;
@@ -468,12 +525,12 @@ body {
 }
 
 .target-drawer {
-  min-height: 176px;
+  min-height: 260px;
 }
 
 .target-stack {
   position: relative;
-  min-height: 132px;
+  min-height: 188px;
   padding: 12px 0 0;
 }
 
@@ -489,7 +546,7 @@ body {
 .stack-card {
   position: absolute;
   left: calc(var(--stack-index) * 24px);
-  top: 0;
+  top: calc((var(--stack-index) % 2) * 44px);
   background:
     linear-gradient(135deg, #111 0%, #111 18%, #fff 18%, #fff 38%, #111 38%, #111 58%, #fff 58%, #fff 78%, #111 78%);
   box-shadow: 0 10px 18px rgba(0, 0, 0, .12);
@@ -649,5 +706,9 @@ body {
 
   .discard-zone {
     width: 164px;
+  }
+
+  .target-drawer {
+    min-height: 228px;
   }
 }
