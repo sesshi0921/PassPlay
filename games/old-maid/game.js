@@ -1,12 +1,13 @@
 (() => {
   'use strict';
 
-  const directParams = new URLSearchParams(window.location.search);
-  if (window.parent === window && directParams.get('room')) {
+  if (window.parent === window) {
+    const directParams = new URLSearchParams(window.location.search);
     const redirect = new URL('../../play.html', window.location.href);
     redirect.searchParams.set('game', 'old-maid');
     redirect.searchParams.set('mode', 'multi');
-    redirect.searchParams.set('room', directParams.get('room'));
+    const room = directParams.get('room');
+    if (room) redirect.searchParams.set('room', room);
     const api = directParams.get('api');
     if (api) redirect.searchParams.set('api', api);
     window.location.replace(redirect.toString());
