@@ -33,7 +33,7 @@ window.PassPlay.register(async api => {
     initialSweepTimers: [],
     initialCheckingCardIds: new Set(),
     initialReleaseCardIds: new Set(),
-    initialHiddenCardIds: new Set(),
+    initialReleasedCardIds: new Set(),
     removalAnim: null,
     releaseGhosts: [],
     drawAnim: null,
@@ -392,7 +392,7 @@ window.PassPlay.register(async api => {
     const hand = snapshot.privateState?.hand || [];
     const releaseGroups = findReleaseGroups(hand);
     const startDelay = 1800;
-    const stepDelay = 340;
+    const stepDelay = 860;
 
     state.initialSweepTimers.push(window.setTimeout(() => {
       $startBanner.hidden = true;
@@ -404,7 +404,7 @@ window.PassPlay.register(async api => {
           state.initialSweepTimers.push(window.setTimeout(() => {
             for (const cardId of group) {
               state.initialReleaseCardIds.delete(cardId);
-              state.initialHiddenCardIds.add(cardId);
+              state.initialReleasedCardIds.add(cardId);
             }
             state.initialCheckingCardIds = new Set();
             if (state.snapshot?.phase === 'pairing') renderMyHand(state.snapshot.privateState?.hand || []);
@@ -419,7 +419,7 @@ window.PassPlay.register(async api => {
     state.initialSweepTimers = [];
     state.initialCheckingCardIds = new Set();
     state.initialReleaseCardIds = new Set();
-    state.initialHiddenCardIds = new Set();
+    state.initialReleasedCardIds = new Set();
     state.initialSweepKey = '';
   }
 
@@ -445,9 +445,7 @@ window.PassPlay.register(async api => {
 
   function renderMyHand(hand) {
     $myHand.innerHTML = '';
-    const visibleHand = state.snapshot?.phase === 'pairing'
-      ? hand.filter(card => !state.initialHiddenCardIds.has(card.cardId))
-      : hand;
+    const visibleHand = hand;
     layoutCardFan($myHand, visibleHand.length, {
       minWidth: 30,
       maxWidth: 68,
@@ -463,6 +461,7 @@ window.PassPlay.register(async api => {
       if (card.appealing || state.selectedPairCardIds.includes(card.cardId)) button.classList.add('appealing');
       if (state.initialCheckingCardIds.has(card.cardId)) button.classList.add('checking');
       if (state.initialReleaseCardIds.has(card.cardId)) button.classList.add('releasing');
+      if (state.initialReleasedCardIds.has(card.cardId)) button.classList.add('released-held');
       button.type = 'button';
       button.addEventListener('click', () => handleHandCardClick(card.cardId));
 

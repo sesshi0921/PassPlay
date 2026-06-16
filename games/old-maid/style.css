@@ -738,6 +738,11 @@ body {
   animation: card-release-up .76s ease forwards;
 }
 
+.hand-card.released-held {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .hand-card-name {
   font-size: clamp(12px, calc(var(--hand-card-width) * .32), 20px);
   font-weight: 900;
