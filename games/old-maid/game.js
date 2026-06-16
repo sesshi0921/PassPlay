@@ -432,7 +432,7 @@ window.PassPlay.register(async api => {
       const name = playerName();
       saveName(name);
       const roomLabel = roomLabelValue();
-      const snapshot = await api.room.create({ playerName: name, transport: 'http', roomLabel });
+      const snapshot = await api.room.create({ playerName: name, transport: 'ws', roomLabel });
       setSnapshot(snapshot);
     } catch (error) {
       setError(error.message);
@@ -445,7 +445,7 @@ window.PassPlay.register(async api => {
       const name = playerName();
       saveName(name);
       const roomId = $joinRoomId.value.trim();
-      const snapshot = await api.room.join({ roomId, playerName: name, transport: 'http' });
+      const snapshot = await api.room.join({ roomId, playerName: name, transport: 'ws' });
       setSnapshot(snapshot);
     } catch (error) {
       setError(error.message);

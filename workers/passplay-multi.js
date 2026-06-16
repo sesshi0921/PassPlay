@@ -11,6 +11,11 @@ const GAME_DEFINITIONS = {
   },
 };
 
+const WS_STALE_MS = 5000;
+const TURN_TIMEOUT_MS = 60000;
+const ROOM_IDLE_MS = 15000;
+const ALARM_INTERVAL_MS = 2000;
+
 export default {
   async fetch(request, env) {
     if (request.method === 'OPTIONS') {
@@ -84,8 +89,9 @@ export default {
 };
 
 export class PassPlayRoom {
-  constructor(ctx) {
+  constructor(ctx, env) {
     this.ctx = ctx;
+    this.env = env;
     this.room = null;
     this.sockets = new Map();
   }
@@ -133,6 +139,7 @@ export class PassPlayRoom {
       gameId: null,
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      origin: null,
       revision: 0,
       phase: 'waiting',
       hostPlayerId: null,
@@ -144,11 +151,33 @@ export class PassPlayRoom {
       lastEvent: null,
       result: null,
     };
+    this.room.players = (this.room.players || []).map(player => ({
+      ...player,
+      isConnected: player.isConnected !== false,
+      lastSeenAt: player.lastSeenAt || Date.now(),
+      turnStartedAt: player.turnStartedAt || null,
+    }));
   }
 
   async persist() {
     this.room.updatedAt = Date.now();
     await this.ctx.storage.put('room', this.room);
+    await this.scheduleAlarm();
+  }
+
+  async alarm() {
+    const stored = await this.ctx.storage.get('room');
+    if (!stored) return;
+    this.room = stored;
+    const changed = await this.applyTimeouts();
+    if (!this.room) return;
+    if (changed) {
+      this.bump('timeout');
+      await this.persist();
+      await this.broadcast();
+      return;
+    }
+    await this.scheduleAlarm();
   }
 
   playerById(playerId) {
@@ -163,13 +192,41 @@ export class PassPlayRoom {
     return player;
   }
 
+  touchPlayer(player, now = Date.now()) {
+    player.lastSeenAt = now;
+    player.isConnected = true;
+  }
+
+  async scheduleAlarm() {
+    if (!this.room) return;
+    const now = Date.now();
+    const candidates = [];
+    const connectedPlayers = this.room.players.filter(player => player.isConnected !== false);
+    for (const player of connectedPlayers) {
+      if ((player.transport || 'http') === 'ws') {
+        candidates.push((player.lastSeenAt || now) + WS_STALE_MS);
+      }
+    }
+    if (this.room.phase === 'playing' && this.room.turnPlayerId) {
+      const turnPlayer = this.playerById(this.room.turnPlayerId);
+      if (turnPlayer) candidates.push((turnPlayer.turnStartedAt || now) + TURN_TIMEOUT_MS);
+    }
+    if (connectedPlayers.length === 0) {
+      candidates.push((this.room.updatedAt || now) + ROOM_IDLE_MS);
+    }
+    const nextAt = candidates.length ? Math.min(...candidates) : (now + ALARM_INTERVAL_MS);
+    await this.ctx.storage.setAlarm(Math.max(now + 250, nextAt));
+  }
+
   async handleCreate(request) {
     const body = await request.json();
     validateGame(body.gameId);
     const playerName = normalizeName(body.playerName);
     const playerId = createId('p');
     const sessionToken = createSecret();
+    const now = Date.now();
     this.room.gameId = body.gameId;
+    this.room.origin = request.headers.get('x-passplay-origin');
     this.room.roomLabel = normalizeRoomLabel(body.roomLabel) || roomIdToLabel(this.room.roomId);
     this.room.phase = 'waiting';
     this.room.hostPlayerId = playerId;
@@ -184,6 +241,8 @@ export class PassPlayRoom {
       appeal: [],
       isOut: false,
       finishOrder: null,
+      lastSeenAt: now,
+      turnStartedAt: null,
     }];
     this.room.turnOrder = [];
     this.room.turnPlayerId = null;
@@ -200,6 +259,7 @@ export class PassPlayRoom {
   async handleJoin(request) {
     const body = await request.json();
     validateGame(body.gameId);
+    this.room.origin = request.headers.get('x-passplay-origin');
     if (this.room.gameId !== body.gameId) throw new Error('game mismatch');
     if (this.room.phase !== 'waiting') throw new Error('game already started');
     const rule = GAME_DEFINITIONS[this.room.gameId];
@@ -210,6 +270,7 @@ export class PassPlayRoom {
     }
     const playerId = createId('p');
     const sessionToken = createSecret();
+    const now = Date.now();
     this.room.players.push({
       id: playerId,
       name: playerName,
@@ -221,6 +282,8 @@ export class PassPlayRoom {
       appeal: [],
       isOut: false,
       finishOrder: null,
+      lastSeenAt: now,
+      turnStartedAt: null,
     });
     this.bump('player-joined');
     await this.persist();
@@ -234,7 +297,12 @@ export class PassPlayRoom {
   async handleLeave(request) {
     const body = await request.json();
     const player = this.auth(body.playerId, body.sessionToken);
-    player.isConnected = false;
+    this.room.origin = request.headers.get('x-passplay-origin');
+    this.removePlayer(player.id, 'leave');
+    if (!this.room || this.room.players.length === 0) {
+      await this.destroyRoom();
+      return json({ ok: true });
+    }
     this.bump('player-left');
     await this.persist();
     await this.broadcast(request.headers.get('x-passplay-origin'));
@@ -244,6 +312,8 @@ export class PassPlayRoom {
   async handleStart(request) {
     const body = await request.json();
     const player = this.auth(body.playerId, body.sessionToken);
+    this.touchPlayer(player);
+    this.room.origin = request.headers.get('x-passplay-origin');
     if (!player.isHost) throw new Error('host only');
     if (this.room.phase !== 'waiting') throw new Error('already started');
     const rule = GAME_DEFINITIONS[this.room.gameId];
@@ -260,6 +330,8 @@ export class PassPlayRoom {
   async handleAction(request) {
     const body = await request.json();
     const player = this.auth(body.playerId, body.sessionToken);
+    this.touchPlayer(player);
+    this.room.origin = request.headers.get('x-passplay-origin');
     if (this.room.gameId !== body.gameId) throw new Error('game mismatch');
     applyRoomAction(this.room, player.id, body.action);
     this.bump(body.action?.type || 'action');
@@ -272,6 +344,9 @@ export class PassPlayRoom {
 
   async handleSync(request, url) {
     const player = this.auth(url.searchParams.get('playerId'), url.searchParams.get('sessionToken'));
+    this.touchPlayer(player);
+    this.room.origin = request.headers.get('x-passplay-origin');
+    await this.persist();
     return json({
       snapshot: this.makeSnapshot(player.id, player.transport || 'http', request.headers.get('x-passplay-origin')),
     });
@@ -279,6 +354,8 @@ export class PassPlayRoom {
 
   handleWebSocket(request, url) {
     const player = this.auth(url.searchParams.get('playerId'), url.searchParams.get('sessionToken'));
+    this.touchPlayer(player);
+    this.room.origin = request.headers.get('x-passplay-origin');
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
     server.accept();
@@ -291,10 +368,16 @@ export class PassPlayRoom {
       try {
         const message = JSON.parse(event.data);
         if (message.type === 'hello') {
+          this.touchPlayer(player);
           server.send(JSON.stringify({
             type: 'snapshot',
             snapshot: this.makeSnapshot(player.id, 'ws', request.headers.get('x-passplay-origin')),
           }));
+          this.persist();
+        } else if (message.type === 'ping') {
+          this.touchPlayer(player);
+          server.send(JSON.stringify({ type: 'pong', at: Date.now() }));
+          this.persist();
         }
       } catch {
         server.send(JSON.stringify({ type: 'error', message: 'invalid message' }));
@@ -367,11 +450,12 @@ export class PassPlayRoom {
   }
 
   async broadcast(origin) {
+    const resolvedOrigin = origin || this.room?.origin || 'https://passplay.seshimaru-dev.workers.dev';
     for (const [playerId, socket] of this.sockets.entries()) {
       try {
         socket.send(JSON.stringify({
           type: 'snapshot',
-          snapshot: this.makeSnapshot(playerId, 'ws', origin),
+          snapshot: this.makeSnapshot(playerId, 'ws', resolvedOrigin),
         }));
       } catch {
         this.sockets.delete(playerId);
@@ -385,6 +469,78 @@ export class PassPlayRoom {
       type: eventType,
       at: Date.now(),
     };
+  }
+
+  async applyTimeouts() {
+    if (!this.room) return false;
+    const now = Date.now();
+    let changed = false;
+
+    for (const player of [...this.room.players]) {
+      if (!player) continue;
+      if ((player.transport || 'http') === 'ws' && player.isConnected !== false && now - (player.lastSeenAt || 0) >= WS_STALE_MS) {
+        this.removePlayer(player.id, 'stale');
+        changed = true;
+        if (!this.room) return true;
+      }
+    }
+
+    if (this.room.phase === 'playing' && this.room.turnPlayerId) {
+      const turnPlayer = this.playerById(this.room.turnPlayerId);
+      if (turnPlayer && now - (turnPlayer.turnStartedAt || now) >= TURN_TIMEOUT_MS) {
+        this.removePlayer(turnPlayer.id, 'turn-timeout');
+        changed = true;
+      }
+    }
+
+    if (this.room && this.room.players.length === 0) {
+      await this.destroyRoom();
+      return true;
+    }
+    return changed;
+  }
+
+  removePlayer(playerId, reason) {
+    if (!this.room) return;
+    const removed = this.playerById(playerId);
+    if (!removed) return;
+    this.sockets.get(playerId)?.close(1000, reason);
+    this.sockets.delete(playerId);
+    this.room.players = this.room.players.filter(player => player.id !== playerId);
+    this.room.turnOrder = this.room.turnOrder.filter(id => id !== playerId);
+    if (this.room.hostPlayerId === playerId) {
+      this.room.hostPlayerId = this.room.players[0]?.id || null;
+      if (this.room.players[0]) this.room.players[0].isHost = true;
+    }
+    if (this.room.turnPlayerId === playerId) {
+      this.room.turnPlayerId = this.room.turnOrder.length ? getNextTurnPlayer(this.room, playerId) : null;
+      if (this.room.turnPlayerId) {
+        const nextTurn = this.playerById(this.room.turnPlayerId);
+        if (nextTurn) nextTurn.turnStartedAt = Date.now();
+      }
+    }
+    if (this.room.players.length === 0) return;
+    if (this.room.phase === 'playing') {
+      assignFinishedPlayers(this.room);
+      maybeFinishRoom(this.room);
+    }
+  }
+
+  async destroyRoom() {
+    if (!this.room) return;
+    const label = this.room.roomLabel;
+    this.sockets.forEach(socket => {
+      try { socket.close(1000, 'room closed'); } catch {}
+    });
+    this.sockets.clear();
+    const directory = this.env.ROOM_DIRECTORY.get(this.env.ROOM_DIRECTORY.idFromName('global'));
+    await directory.fetch(new Request('https://directory.internal/release', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ roomLabel: label }),
+    }));
+    await this.ctx.storage.deleteAll();
+    this.room = null;
   }
 }
 
@@ -415,6 +571,13 @@ export class PassPlayRoomDirectory {
         const roomId = await this.ctx.storage.get(roomDirectoryKey(roomLabel));
         if (!roomId) return json({ error: 'passphrase not found' }, 404);
         return json({ roomId, roomLabel });
+      }
+      if (url.pathname === '/release' && request.method === 'POST') {
+        const body = await request.json();
+        const roomLabel = normalizeRoomLabel(body.roomLabel || '');
+        if (!roomLabel) return json({ error: 'passphrase required' }, 400);
+        await this.ctx.storage.delete(roomDirectoryKey(roomLabel));
+        return json({ ok: true });
       }
       return json({ error: 'not found' }, 404);
     } catch (error) {
@@ -473,6 +636,10 @@ function startOldMaid(room) {
   if (room.turnPlayerId && findPlayer(room, room.turnPlayerId).isOut) {
     room.turnPlayerId = getNextTurnPlayer(room, room.turnPlayerId);
   }
+  if (room.turnPlayerId) {
+    const turnPlayer = findPlayer(room, room.turnPlayerId);
+    turnPlayer.turnStartedAt = Date.now();
+  }
 }
 
 function applyOldMaidDraw(room, playerId, slot) {
@@ -507,6 +674,10 @@ function applyOldMaidDraw(room, playerId, slot) {
   assignFinishedPlayers(room);
   if (maybeFinishRoom(room)) return;
   room.turnPlayerId = getNextTurnPlayer(room, actor.id);
+  if (room.turnPlayerId) {
+    const nextTurn = findPlayer(room, room.turnPlayerId);
+    nextTurn.turnStartedAt = Date.now();
+  }
 }
 
 function getNextTurnPlayer(room, currentPlayerId) {

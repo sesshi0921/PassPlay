@@ -92,6 +92,7 @@
     let disposed = false;
     let socket = null;
     let socketTransport = null;
+    let heartbeatTimer = null;
 
     function setSnapshot(nextSnapshot) {
       snapshot = nextSnapshot;
@@ -105,7 +106,15 @@
       }
     }
 
+    function clearHeartbeat() {
+      if (heartbeatTimer) {
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = null;
+      }
+    }
+
     function closeSocket() {
+      clearHeartbeat();
       if (socket) {
         socket.onopen = null;
         socket.onmessage = null;
@@ -152,7 +161,7 @@
     }
 
     async function createRoom(options) {
-      const transport = options.transport || 'http';
+      const transport = options.transport || 'ws';
       const payload = await request('POST', '/rooms', {
         gameId,
         playerName: options.playerName,
@@ -166,7 +175,7 @@
     }
 
     async function joinRoom(options) {
-      const transport = options.transport || 'http';
+      const transport = options.transport || 'ws';
       const payload = await request('POST', '/rooms/join', {
         gameId,
         playerName: options.playerName,
@@ -259,12 +268,20 @@
           type: 'hello',
           lastRevision: snapshot ? snapshot.revision : 0,
         }));
+        clearHeartbeat();
+        heartbeatTimer = setInterval(() => {
+          if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: 'ping', at: Date.now() }));
+          }
+        }, 2000);
       };
       socket.onmessage = event => {
         try {
           const message = JSON.parse(event.data);
           if (message.type === 'snapshot' && message.snapshot) {
             setSnapshot(message.snapshot);
+          } else if (message.type === 'error') {
+            throw new Error(message.message || 'socket error');
           }
         } catch (error) {
           console.warn('[PassPlay] invalid ws message:', error);
@@ -329,6 +346,7 @@
       dispose() {
         disposed = true;
         clearPolling();
+        clearHeartbeat();
         closeSocket();
       },
     };
