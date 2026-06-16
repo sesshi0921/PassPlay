@@ -33,9 +33,13 @@ window.PassPlay.register(async api => {
     initialSweepTimers: [],
     initialCheckingCardIds: new Set(),
     initialReleaseCardIds: new Set(),
+    initialHiddenCardIds: new Set(),
     removalAnim: null,
     releaseGhosts: [],
     drawAnim: null,
+    pendingResultMoveAt: 0,
+    pendingResultTimer: null,
+    completedResultDelayMoveAt: 0,
   };
 
   const $playerName = document.getElementById('player-name');
@@ -157,9 +161,20 @@ window.PassPlay.register(async api => {
   function renderRoom(snapshot) {
     const isWaiting = snapshot.phase === 'waiting';
     const isFinished = snapshot.phase === 'finished';
+    if (!isFinished) {
+      clearPendingResult();
+      state.completedResultDelayMoveAt = 0;
+    }
     if (isWaiting) show('room');
     if (snapshot.phase === 'pairing' || snapshot.phase === 'playing') show('play');
-    if (isFinished) show('result');
+    if (isFinished) {
+      if (shouldDelayResult(snapshot)) {
+        show('play');
+        scheduleResult(snapshot);
+      } else {
+        show('result');
+      }
+    }
 
     $roomCode.textContent = snapshot.roomLabel || snapshot.roomId;
     $playRoomCode.textContent = snapshot.roomLabel || snapshot.roomId;
@@ -173,6 +188,38 @@ window.PassPlay.register(async api => {
     renderResult(snapshot);
 
     document.getElementById('start-game').disabled = !snapshot.privateState?.canStart;
+  }
+
+  function shouldDelayResult(snapshot) {
+    const move = snapshot.publicState?.lastMove;
+    if (!move || move.type === 'starter-selected') return false;
+    if (state.completedResultDelayMoveAt === move.at) return false;
+    if (state.pendingResultMoveAt === move.at) return true;
+    const previousPhase = state.previousSnapshot?.phase;
+    return previousPhase === 'playing' && snapshot.phase === 'finished';
+  }
+
+  function scheduleResult(snapshot) {
+    const moveAt = snapshot.publicState?.lastMove?.at || snapshot.revision;
+    if (state.pendingResultMoveAt === moveAt && state.pendingResultTimer) return;
+    clearPendingResult();
+    state.pendingResultMoveAt = moveAt;
+    state.pendingResultTimer = window.setTimeout(() => {
+      state.pendingResultTimer = null;
+      if (state.snapshot?.phase === 'finished') {
+        state.completedResultDelayMoveAt = moveAt;
+        show('result');
+        renderResult(state.snapshot);
+      }
+    }, 1650);
+  }
+
+  function clearPendingResult() {
+    if (state.pendingResultTimer) {
+      clearTimeout(state.pendingResultTimer);
+      state.pendingResultTimer = null;
+    }
+    state.pendingResultMoveAt = 0;
   }
 
   function renderPlay(snapshot) {
@@ -354,6 +401,14 @@ window.PassPlay.register(async api => {
           state.initialCheckingCardIds = new Set(group);
           for (const cardId of group) state.initialReleaseCardIds.add(cardId);
           if (state.snapshot?.phase === 'pairing') renderMyHand(state.snapshot.privateState?.hand || []);
+          state.initialSweepTimers.push(window.setTimeout(() => {
+            for (const cardId of group) {
+              state.initialReleaseCardIds.delete(cardId);
+              state.initialHiddenCardIds.add(cardId);
+            }
+            state.initialCheckingCardIds = new Set();
+            if (state.snapshot?.phase === 'pairing') renderMyHand(state.snapshot.privateState?.hand || []);
+          }, 760));
         }, index * stepDelay));
       });
     }, startDelay));
@@ -364,6 +419,7 @@ window.PassPlay.register(async api => {
     state.initialSweepTimers = [];
     state.initialCheckingCardIds = new Set();
     state.initialReleaseCardIds = new Set();
+    state.initialHiddenCardIds = new Set();
     state.initialSweepKey = '';
   }
 
@@ -389,7 +445,10 @@ window.PassPlay.register(async api => {
 
   function renderMyHand(hand) {
     $myHand.innerHTML = '';
-    layoutCardFan($myHand, hand.length, {
+    const visibleHand = state.snapshot?.phase === 'pairing'
+      ? hand.filter(card => !state.initialHiddenCardIds.has(card.cardId))
+      : hand;
+    layoutCardFan($myHand, visibleHand.length, {
       minWidth: 30,
       maxWidth: 68,
       heightRatio: 1.42,
@@ -397,7 +456,7 @@ window.PassPlay.register(async api => {
       maxStep: 46,
       fallbackWidth: 332,
     });
-    hand.forEach((card, index) => {
+    visibleHand.forEach((card, index) => {
       const button = document.createElement('button');
       button.className = 'hand-card';
       button.style.setProperty('--card-index', String(index));
@@ -642,6 +701,11 @@ window.PassPlay.register(async api => {
     }
   }
 
+  function canRenderPlaySurface(moveAt = 0) {
+    if (state.snapshot?.phase === 'playing') return true;
+    return !!moveAt && state.snapshot?.phase === 'finished' && state.pendingResultMoveAt === moveAt;
+  }
+
   function handleTargetTap(slot) {
     const now = Date.now();
     if (state.selectedTargetSlot === slot && now - state.lastTargetTapAt < 360) {
@@ -749,7 +813,7 @@ window.PassPlay.register(async api => {
       window.setTimeout(() => {
         if (state.drawAnim?.at === nextMove.at) {
           state.drawAnim = null;
-          if (state.snapshot?.phase === 'playing') renderPlay(state.snapshot);
+          if (canRenderPlaySurface(nextMove.at)) renderPlay(state.snapshot);
         }
       }, 1200);
       return;
@@ -763,7 +827,7 @@ window.PassPlay.register(async api => {
         window.setTimeout(() => {
           if (state.removalAnim?.at === nextMove.at) {
             state.removalAnim = null;
-            if (state.snapshot?.phase === 'playing') renderPlay(state.snapshot);
+            if (canRenderPlaySurface(nextMove.at)) renderPlay(state.snapshot);
           }
         }, 720);
       }
@@ -774,17 +838,17 @@ window.PassPlay.register(async api => {
       window.setTimeout(() => {
         if (state.drawAnim?.at === nextMove.at) {
           state.drawAnim = null;
-          if (state.snapshot?.phase === 'playing') renderPlay(state.snapshot);
+          if (canRenderPlaySurface(nextMove.at)) renderPlay(state.snapshot);
         }
       }, 900);
 
       if ((nextMove.removedLabels || []).length > 0) {
         window.setTimeout(() => {
           state.releaseGhosts = makeReleaseGhosts(previousSnapshot?.privateState?.hand || [], nextMove.removedLabels, nextMove.drawnCardLabel, nextMove.at);
-          if (state.snapshot?.phase === 'playing') renderPlay(state.snapshot);
+          if (canRenderPlaySurface(nextMove.at)) renderPlay(state.snapshot);
           window.setTimeout(() => {
             state.releaseGhosts = state.releaseGhosts.filter(ghost => ghost.at !== nextMove.at);
-            if (state.snapshot?.phase === 'playing') renderPlay(state.snapshot);
+            if (canRenderPlaySurface(nextMove.at)) renderPlay(state.snapshot);
           }, 760);
         }, 620);
       }
@@ -848,6 +912,8 @@ window.PassPlay.register(async api => {
     clearPairSelection();
     clearInitialSweep();
     clearTurnCountdown();
+    clearPendingResult();
+    state.completedResultDelayMoveAt = 0;
     state.removalAnim = null;
     state.releaseGhosts = [];
     state.drawAnim = null;
@@ -869,6 +935,8 @@ window.PassPlay.register(async api => {
     clearPairSelection();
     clearInitialSweep();
     clearTurnCountdown();
+    clearPendingResult();
+    state.completedResultDelayMoveAt = 0;
     state.removalAnim = null;
     state.releaseGhosts = [];
     state.drawAnim = null;
@@ -891,6 +959,8 @@ window.PassPlay.register(async api => {
       clearPairSelection();
       clearInitialSweep();
       clearTurnCountdown();
+      clearPendingResult();
+      state.completedResultDelayMoveAt = 0;
       show('setup');
     }
   });
