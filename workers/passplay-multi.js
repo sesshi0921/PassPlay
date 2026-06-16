@@ -15,6 +15,9 @@ const WS_STALE_MS = 5000;
 const TURN_TIMEOUT_MS = 60000;
 const ROOM_IDLE_MS = 15000;
 const ALARM_INTERVAL_MS = 2000;
+const INITIAL_START_BANNER_MS = 1800;
+const INITIAL_PAIR_STEP_MS = 340;
+const INITIAL_PAIR_FINISH_MS = 900;
 
 export default {
   async fetch(request, env) {
@@ -210,6 +213,9 @@ export class PassPlayRoom {
     if (this.room.phase === 'playing' && this.room.turnPlayerId) {
       const turnPlayer = this.playerById(this.room.turnPlayerId);
       if (turnPlayer) candidates.push((turnPlayer.turnStartedAt || now) + TURN_TIMEOUT_MS);
+    }
+    if (this.room.phase === 'pairing' && this.room.autoPairingResolveAt) {
+      candidates.push(this.room.autoPairingResolveAt);
     }
     if (connectedPlayers.length === 0) {
       candidates.push((this.room.updatedAt || now) + ROOM_IDLE_MS);
@@ -431,6 +437,7 @@ export class PassPlayRoom {
         discardPile: (this.room.discardPile || []).slice(-12),
         lastMove: this.room.lastMove || null,
         dealStartedAt: this.room.dealStartedAt || null,
+        autoPairingResolveAt: this.room.autoPairingResolveAt || null,
         phase: this.room.phase,
         result: this.room.result,
         pairReadyPlayerIds: this.room.players.filter(current => current.pairReady).map(current => current.id),
@@ -500,6 +507,11 @@ export class PassPlayRoom {
         this.removePlayer(turnPlayer.id, 'turn-timeout');
         changed = true;
       }
+    }
+
+    if (this.room.phase === 'pairing' && this.room.autoPairingResolveAt && now >= this.room.autoPairingResolveAt) {
+      finishInitialPairing(this.room);
+      changed = true;
     }
 
     if (this.room && this.room.players.length === 0) {
@@ -626,12 +638,14 @@ function applyRoomAction(room, playerId, action) {
 function startOldMaid(room) {
   const order = shuffle(room.players.map(player => player.id));
   const deck = shuffle(createDeck());
+  const now = Date.now();
   room.turnOrder = order;
   room.turnPlayerId = null;
   room.phase = 'pairing';
   room.result = null;
   room.discardPile = [];
   room.lastMove = null;
+  room.autoPairingResolveAt = null;
   for (const player of room.players) {
     player.hand = [];
     player.appeal = [];
@@ -647,7 +661,39 @@ function startOldMaid(room) {
   for (const player of room.players) {
     sortHand(player.hand);
   }
-  room.dealStartedAt = Date.now();
+  const maxPairCount = Math.max(0, ...room.players.map(player => findAvailablePairs(player.hand).length));
+  room.dealStartedAt = now;
+  room.autoPairingResolveAt = now + INITIAL_START_BANNER_MS + (maxPairCount * INITIAL_PAIR_STEP_MS) + INITIAL_PAIR_FINISH_MS;
+}
+
+function finishInitialPairing(room) {
+  if (room.phase !== 'pairing') return;
+  for (const player of room.players) {
+    const resolved = resolveHand(player.hand);
+    player.hand = resolved.hand;
+    player.appeal = player.appeal.filter(cardId => player.hand.includes(cardId)).slice(0, 2);
+    player.pairReady = true;
+    pushDiscardPile(room, player.id, resolved.removed, 'initial-pair');
+  }
+
+  room.phase = 'playing';
+  room.autoPairingResolveAt = null;
+  const active = room.turnOrder.filter(id => {
+    const candidate = findPlayer(room, id);
+    return candidate.hand.length > 0;
+  });
+  room.turnPlayerId = active.length ? active[randomInt(active.length)] : room.turnOrder[0] || null;
+  room.lastMove = {
+    type: 'starter-selected',
+    starterPlayerId: room.turnPlayerId,
+    at: Date.now(),
+  };
+  assignFinishedPlayers(room);
+  maybeFinishRoom(room);
+  if (room.turnPlayerId) {
+    const turnPlayer = findPlayer(room, room.turnPlayerId);
+    turnPlayer.turnStartedAt = Date.now();
+  }
 }
 
 function applyPairDiscard(room, playerId, cardIds) {

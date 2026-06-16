@@ -29,7 +29,12 @@ window.PassPlay.register(async api => {
     pairSelectionDeadline: 0,
     pairSelectionTimer: null,
     turnCountdownTimer: null,
+    initialSweepKey: '',
+    initialSweepTimers: [],
+    initialCheckingCardIds: new Set(),
+    initialReleaseCardIds: new Set(),
     removalAnim: null,
+    releaseGhosts: [],
     drawAnim: null,
   };
 
@@ -58,6 +63,7 @@ window.PassPlay.register(async api => {
   const $pairingNote = document.getElementById('pairing-note');
   const $pairingTimer = document.getElementById('pairing-timer');
   const $pairingReady = document.getElementById('pairing-ready');
+  const $startBanner = document.getElementById('start-banner');
   const $drawAnimationCard = document.getElementById('draw-animation-card');
   const $resultSummary = document.getElementById('result-summary');
 
@@ -257,7 +263,7 @@ window.PassPlay.register(async api => {
     if (latest.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'discard-placeholder';
-      empty.textContent = 'まだありません';
+      empty.textContent = 'そろったカード';
       $discardPile.appendChild(empty);
       return;
     }
@@ -317,35 +323,68 @@ window.PassPlay.register(async api => {
 
   function renderPairing(snapshot) {
     const isPairing = snapshot.phase === 'pairing';
-    $pairingOverlay.hidden = !isPairing;
+    $pairingOverlay.hidden = true;
     if (!isPairing) {
       clearPairSelection();
+      clearInitialSweep();
+      $startBanner.hidden = true;
       return;
     }
 
-    const previousPhase = state.previousSnapshot?.phase;
-    const allReady = (snapshot.publicState?.pairReadyPlayerIds || []).length === snapshot.players.length;
-    $pairingTitle.textContent = previousPhase === 'waiting'
-      ? '手札を配っています'
-      : allReady
-        ? '先手を決めています'
-        : 'そろった札を捨てる';
-    $pairingNote.textContent = allReady
-      ? '全員準備完了。ランダムに開始します。'
-      : snapshot.privateState?.pairReady
-        ? 'ほかのプレイヤーを待っています。'
-        : '同じ数字を2枚上げて再タップ。';
+    setupInitialSweep(snapshot);
+  }
 
-    $pairingReady.disabled = !snapshot.privateState?.canReadyPairs || !!snapshot.privateState?.pairReady;
-    if (snapshot.privateState?.pairReady) {
-      clearPairSelection();
-      $pairingTimer.textContent = 'OK';
-    } else if (state.selectedPairCardIds.length > 0) {
-      ensurePairSelectionTimer();
-      renderPairSelectionTimer();
-    } else {
-      $pairingTimer.textContent = snapshot.privateState?.canReadyPairs ? 'OK' : '15';
+  function setupInitialSweep(snapshot) {
+    const dealKey = `${snapshot.roomId}:${snapshot.publicState?.dealStartedAt || snapshot.revision}`;
+    if (state.initialSweepKey === dealKey) return;
+
+    clearInitialSweep();
+    state.initialSweepKey = dealKey;
+    $startBanner.hidden = false;
+
+    const hand = snapshot.privateState?.hand || [];
+    const releaseGroups = findReleaseGroups(hand);
+    const startDelay = 1800;
+    const stepDelay = 340;
+
+    state.initialSweepTimers.push(window.setTimeout(() => {
+      $startBanner.hidden = true;
+      releaseGroups.forEach((group, index) => {
+        state.initialSweepTimers.push(window.setTimeout(() => {
+          state.initialCheckingCardIds = new Set(group);
+          for (const cardId of group) state.initialReleaseCardIds.add(cardId);
+          if (state.snapshot?.phase === 'pairing') renderMyHand(state.snapshot.privateState?.hand || []);
+        }, index * stepDelay));
+      });
+    }, startDelay));
+  }
+
+  function clearInitialSweep() {
+    for (const timer of state.initialSweepTimers) clearTimeout(timer);
+    state.initialSweepTimers = [];
+    state.initialCheckingCardIds = new Set();
+    state.initialReleaseCardIds = new Set();
+    state.initialSweepKey = '';
+  }
+
+  function findReleaseGroups(hand) {
+    const groups = new Map();
+    for (const card of hand) {
+      const rank = rankFromLabel(card.label);
+      if (rank === 'JOKER') continue;
+      const cards = groups.get(rank) || [];
+      cards.push(card);
+      groups.set(rank, cards);
     }
+
+    const releaseGroups = [];
+    for (const cards of groups.values()) {
+      const startIndex = cards.length % 2 === 1 ? 1 : 0;
+      for (let index = startIndex; index + 1 < cards.length; index += 2) {
+        releaseGroups.push([cards[index].cardId, cards[index + 1].cardId]);
+      }
+    }
+    return releaseGroups;
   }
 
   function renderMyHand(hand) {
@@ -363,6 +402,8 @@ window.PassPlay.register(async api => {
       button.className = 'hand-card';
       button.style.setProperty('--card-index', String(index));
       if (card.appealing || state.selectedPairCardIds.includes(card.cardId)) button.classList.add('appealing');
+      if (state.initialCheckingCardIds.has(card.cardId)) button.classList.add('checking');
+      if (state.initialReleaseCardIds.has(card.cardId)) button.classList.add('releasing');
       button.type = 'button';
       button.addEventListener('click', () => handleHandCardClick(card.cardId));
 
@@ -382,8 +423,15 @@ window.PassPlay.register(async api => {
 
   function renderHandOverlay() {
     $handOverlay.innerHTML = '';
-    if (!state.removalAnim) return;
-    layoutCardFan($handOverlay, state.snapshot?.privateState?.hand?.length || 1, {
+    const ghosts = [];
+    if (state.removalAnim) ghosts.push(state.removalAnim);
+    ghosts.push(...state.releaseGhosts);
+    if (ghosts.length === 0) return;
+    const slotCount = Math.max(
+      state.snapshot?.privateState?.hand?.length || 1,
+      ...ghosts.map(ghost => (ghost.slot || 0) + 1),
+    );
+    layoutCardFan($handOverlay, slotCount, {
       minWidth: 30,
       maxWidth: 68,
       heightRatio: 1.42,
@@ -392,11 +440,13 @@ window.PassPlay.register(async api => {
       fallbackWidth: 332,
     });
 
-    const ghost = document.createElement('div');
-    ghost.className = 'hand-card removal-ghost';
-    ghost.style.setProperty('--card-index', String(state.removalAnim.slot));
-    ghost.innerHTML = `<span class="hand-card-name">${state.removalAnim.cardLabel}</span><span class="hand-card-toggle">選ばれました</span>`;
-    $handOverlay.appendChild(ghost);
+    ghosts.forEach(ghostData => {
+      const ghost = document.createElement('div');
+      ghost.className = 'hand-card removal-ghost';
+      ghost.style.setProperty('--card-index', String(ghostData.slot || 0));
+      ghost.innerHTML = `<span class="hand-card-name">${ghostData.cardLabel}</span><span class="hand-card-toggle">リリース</span>`;
+      $handOverlay.appendChild(ghost);
+    });
   }
 
   function renderDrawAnimation() {
@@ -479,6 +529,63 @@ window.PassPlay.register(async api => {
     return stack;
   }
 
+  function makeReleaseGhosts(previousHand, removedLabels, drawnCardLabel, moveAt) {
+    const usedCardIds = new Set();
+    return removedLabels.map(label => {
+      const previousIndex = previousHand.findIndex(card => (
+        !usedCardIds.has(card.cardId) && card.label === label
+      ));
+      if (previousIndex !== -1) {
+        usedCardIds.add(previousHand[previousIndex].cardId);
+        return { slot: previousIndex, cardLabel: label, at: moveAt };
+      }
+      return {
+        slot: insertionSlotForLabel(previousHand, drawnCardLabel || label),
+        cardLabel: label,
+        at: moveAt,
+      };
+    });
+  }
+
+  function insertionSlotForLabel(hand, label) {
+    const incoming = labelSortKey(label);
+    for (let index = 0; index < hand.length; index += 1) {
+      if (compareLabelKeys(incoming, labelSortKey(hand[index].label)) < 0) return index;
+    }
+    return hand.length;
+  }
+
+  function rankFromLabel(label) {
+    return String(label || '').replace(/[♠♣♥♦]/g, '');
+  }
+
+  function labelSortKey(label) {
+    const text = String(label || '');
+    const suit = text.includes('♠') ? 'S'
+      : text.includes('♣') ? 'C'
+      : text.includes('♥') ? 'H'
+      : text.includes('♦') ? 'D'
+      : 'X';
+    return { rank: rankFromLabel(text), suit };
+  }
+
+  function compareLabelKeys(left, right) {
+    const rankGap = rankWeight(left.rank) - rankWeight(right.rank);
+    if (rankGap !== 0) return rankGap;
+    return suitWeight(left.suit) - suitWeight(right.suit);
+  }
+
+  function rankWeight(rank) {
+    const order = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'JOKER'];
+    const index = order.indexOf(rank);
+    return index === -1 ? 999 : index;
+  }
+
+  function suitWeight(suit) {
+    const order = { S: 0, C: 1, H: 2, D: 3, X: 4 };
+    return order[suit] ?? 99;
+  }
+
   function layoutCardFan(element, count, options = {}) {
     const resolvedCount = Math.max(1, count || 1);
     const bounds = element.getBoundingClientRect();
@@ -551,7 +658,6 @@ window.PassPlay.register(async api => {
   function handleHandCardClick(cardId) {
     if (!state.snapshot) return;
     if (state.snapshot.phase === 'pairing') {
-      handlePairCardClick(cardId);
       return;
     }
     toggleAppeal(state.snapshot, cardId);
@@ -671,6 +777,17 @@ window.PassPlay.register(async api => {
           if (state.snapshot?.phase === 'playing') renderPlay(state.snapshot);
         }
       }, 900);
+
+      if ((nextMove.removedLabels || []).length > 0) {
+        window.setTimeout(() => {
+          state.releaseGhosts = makeReleaseGhosts(previousSnapshot?.privateState?.hand || [], nextMove.removedLabels, nextMove.drawnCardLabel, nextMove.at);
+          if (state.snapshot?.phase === 'playing') renderPlay(state.snapshot);
+          window.setTimeout(() => {
+            state.releaseGhosts = state.releaseGhosts.filter(ghost => ghost.at !== nextMove.at);
+            if (state.snapshot?.phase === 'playing') renderPlay(state.snapshot);
+          }, 760);
+        }, 620);
+      }
     }
   }
 
@@ -729,8 +846,10 @@ window.PassPlay.register(async api => {
     state.selectedTargetSlot = null;
     state.lastTargetTapAt = 0;
     clearPairSelection();
+    clearInitialSweep();
     clearTurnCountdown();
     state.removalAnim = null;
+    state.releaseGhosts = [];
     state.drawAnim = null;
     show('setup');
   }
@@ -748,8 +867,10 @@ window.PassPlay.register(async api => {
     state.selectedTargetSlot = null;
     state.lastTargetTapAt = 0;
     clearPairSelection();
+    clearInitialSweep();
     clearTurnCountdown();
     state.removalAnim = null;
+    state.releaseGhosts = [];
     state.drawAnim = null;
     show('setup');
     const reason = event.detail?.reason;
@@ -768,6 +889,7 @@ window.PassPlay.register(async api => {
       state.snapshot = null;
       state.previousSnapshot = null;
       clearPairSelection();
+      clearInitialSweep();
       clearTurnCountdown();
       show('setup');
     }

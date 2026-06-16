@@ -388,6 +388,28 @@ body {
   border-radius: 14px;
 }
 
+.start-banner {
+  position: fixed;
+  left: 50%;
+  top: 38%;
+  z-index: 28;
+  transform: translate(-50%, -50%);
+  padding: 16px 24px;
+  border-radius: 18px;
+  background: rgba(17, 17, 17, .94);
+  color: #fff;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 0;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, .22);
+  pointer-events: none;
+  animation: game-start-pop 1.65s ease forwards;
+}
+
+.start-banner[hidden] {
+  display: none;
+}
+
 .table-shell {
   width: 100%;
   max-width: 360px;
@@ -553,9 +575,10 @@ body {
 
 .discard-placeholder {
   text-align: center;
-  font-size: 12px;
-  color: var(--text-soft);
-  padding-top: 24px;
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--text);
+  padding-top: 26px;
 }
 
 .discard-group {
@@ -705,6 +728,16 @@ body {
   z-index: 80;
 }
 
+.hand-card.checking {
+  transform: translateY(-10px);
+  box-shadow: 0 14px 22px rgba(0, 0, 0, .18);
+}
+
+.hand-card.releasing {
+  pointer-events: none;
+  animation: card-release-up .76s ease forwards;
+}
+
 .hand-card-name {
   font-size: clamp(12px, calc(var(--hand-card-width) * .32), 20px);
   font-weight: 900;
@@ -753,6 +786,36 @@ body {
   100% {
     opacity: 0;
     transform: translateY(-68px) scale(.92);
+  }
+}
+
+@keyframes card-release-up {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  28% {
+    opacity: 1;
+    transform: translateY(-20px) rotate(-2deg) scale(1.02);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-110px) rotate(-8deg) scale(.9);
+  }
+}
+
+@keyframes game-start-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.88);
+  }
+  58% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -58%) scale(1.04);
   }
 }
 
