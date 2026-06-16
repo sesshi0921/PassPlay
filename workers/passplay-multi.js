@@ -11,7 +11,7 @@ const GAME_DEFINITIONS = {
   },
 };
 
-const WS_STALE_MS = 70000;
+const WS_DISCONNECT_GRACE_MS = 15000;
 const TURN_TIMEOUT_MS = 60000;
 const ROOM_IDLE_MS = 15000;
 const ALARM_INTERVAL_MS = 2000;
@@ -158,6 +158,8 @@ export class PassPlayRoom {
       ...player,
       isConnected: player.isConnected !== false,
       lastSeenAt: player.lastSeenAt || Date.now(),
+      disconnectedAt: player.disconnectedAt || null,
+      kicked: !!player.kicked,
       turnStartedAt: player.turnStartedAt || null,
     }));
   }
@@ -189,7 +191,7 @@ export class PassPlayRoom {
 
   auth(playerId, sessionToken) {
     const player = this.playerById(playerId);
-    if (!player || player.sessionToken !== sessionToken) {
+    if (!player || player.sessionToken !== sessionToken || player.kicked) {
       throw new Error('invalid session');
     }
     return player;
@@ -198,17 +200,16 @@ export class PassPlayRoom {
   touchPlayer(player, now = Date.now()) {
     player.lastSeenAt = now;
     player.isConnected = true;
+    player.disconnectedAt = null;
   }
 
   async scheduleAlarm() {
     if (!this.room) return;
     const now = Date.now();
     const candidates = [];
-    const connectedPlayers = this.room.players.filter(player => player.isConnected !== false);
-    for (const player of connectedPlayers) {
-      if ((player.transport || 'http') === 'ws') {
-        candidates.push((player.lastSeenAt || now) + WS_STALE_MS);
-      }
+    const connectedPlayers = this.room.players.filter(player => player.isConnected !== false && !player.kicked);
+    for (const player of this.room.players) {
+      if (player.disconnectedAt && !player.kicked) candidates.push(player.disconnectedAt + WS_DISCONNECT_GRACE_MS);
     }
     if (this.room.phase === 'playing' && this.room.turnPlayerId) {
       const turnPlayer = this.playerById(this.room.turnPlayerId);
@@ -248,6 +249,8 @@ export class PassPlayRoom {
       isOut: false,
       finishOrder: null,
       lastSeenAt: now,
+      disconnectedAt: null,
+      kicked: false,
       turnStartedAt: null,
     }];
     this.room.turnOrder = [];
@@ -289,6 +292,8 @@ export class PassPlayRoom {
       isOut: false,
       finishOrder: null,
       lastSeenAt: now,
+      disconnectedAt: null,
+      kicked: false,
       turnStartedAt: null,
     });
     this.bump('player-joined');
@@ -390,7 +395,18 @@ export class PassPlayRoom {
       }
     });
     server.addEventListener('close', () => {
+      if (this.sockets.get(player.id) !== server) return;
       this.sockets.delete(player.id);
+      const current = this.playerById(player.id);
+      if (!current || current.kicked) return;
+      current.isConnected = false;
+      current.disconnectedAt = Date.now();
+      this.bump('player-disconnected');
+      const persistClose = (async () => {
+        await this.persist();
+        await this.broadcast(request.headers.get('x-passplay-origin'));
+      })();
+      if (typeof this.ctx.waitUntil === 'function') this.ctx.waitUntil(persistClose);
     });
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -419,6 +435,9 @@ export class PassPlayRoom {
         name: current.name,
         isHost: current.isHost,
         isConnected: current.isConnected,
+        disconnectedAt: current.disconnectedAt || null,
+        disconnectDeadlineAt: current.disconnectedAt && !current.kicked ? current.disconnectedAt + WS_DISCONNECT_GRACE_MS : null,
+        kicked: !!current.kicked,
         cardCount: current.hand.length,
         isOut: current.isOut,
         finishOrder: current.finishOrder,
@@ -493,9 +512,13 @@ export class PassPlayRoom {
     let changed = false;
 
     for (const player of [...this.room.players]) {
-      if (!player) continue;
-      if ((player.transport || 'http') === 'ws' && player.isConnected !== false && now - (player.lastSeenAt || 0) >= WS_STALE_MS) {
-        this.removePlayer(player.id, 'stale');
+      if (!player || player.kicked || !player.disconnectedAt) continue;
+      if (now - player.disconnectedAt >= WS_DISCONNECT_GRACE_MS) {
+        if (this.room.phase === 'waiting') {
+          this.removePlayer(player.id, 'disconnect-timeout');
+        } else {
+          this.kickPlayerAsLast(player.id, 'disconnect-timeout');
+        }
         changed = true;
         if (!this.room) return true;
       }
@@ -545,6 +568,38 @@ export class PassPlayRoom {
       assignFinishedPlayers(this.room);
       maybeFinishRoom(this.room);
     }
+  }
+
+  kickPlayerAsLast(playerId, reason) {
+    if (!this.room) return;
+    const player = this.playerById(playerId);
+    if (!player) return;
+    this.sockets.get(playerId)?.close(1000, reason);
+    this.sockets.delete(playerId);
+    player.kicked = true;
+    player.kickedReason = reason;
+    player.isHost = false;
+    player.isConnected = false;
+    player.disconnectedAt = null;
+    player.isOut = true;
+    player.finishOrder = this.room.players.length;
+    player.hand = [];
+    player.appeal = [];
+    this.room.turnOrder = this.room.turnOrder.filter(id => id !== playerId);
+    if (this.room.hostPlayerId === playerId) {
+      const nextHost = this.room.players.find(current => !current.kicked);
+      this.room.hostPlayerId = nextHost?.id || null;
+      if (nextHost) nextHost.isHost = true;
+    }
+    if (this.room.turnPlayerId === playerId) {
+      this.room.turnPlayerId = this.room.turnOrder.length ? getNextTurnPlayer(this.room, playerId) : null;
+      if (this.room.turnPlayerId) {
+        const nextTurn = this.playerById(this.room.turnPlayerId);
+        if (nextTurn) nextTurn.turnStartedAt = Date.now();
+      }
+    }
+    assignFinishedPlayers(this.room);
+    maybeFinishRoom(this.room);
   }
 
   async destroyRoom() {
@@ -776,12 +831,16 @@ function applyOldMaidDraw(room, playerId, slot) {
 }
 
 function getNextTurnPlayer(room, currentPlayerId) {
-  const activeIds = room.turnOrder.filter(playerId => !findPlayer(room, playerId).isOut);
+  const activeIds = room.turnOrder.filter(playerId => {
+    const player = findPlayer(room, playerId);
+    return !player.isOut && !player.kicked;
+  });
   if (activeIds.length <= 1) return activeIds[0] || null;
   const index = room.turnOrder.indexOf(currentPlayerId);
   for (let offset = 1; offset <= room.turnOrder.length; offset += 1) {
     const nextId = room.turnOrder[(index + offset) % room.turnOrder.length];
-    if (!findPlayer(room, nextId).isOut) return nextId;
+    const nextPlayer = findPlayer(room, nextId);
+    if (!nextPlayer.isOut && !nextPlayer.kicked) return nextId;
   }
   return null;
 }
@@ -792,11 +851,11 @@ function getNextActivePlayerId(room, playerId) {
 }
 
 function assignFinishedPlayers(room) {
-  const assigned = room.players.filter(player => player.finishOrder !== null).length;
+  const assigned = room.players.filter(player => player.finishOrder !== null && !player.kicked).length;
   let nextOrder = assigned + 1;
   for (const playerId of room.turnOrder) {
     const player = findPlayer(room, playerId);
-    if (!player.isOut && player.hand.length === 0) {
+    if (!player.kicked && !player.isOut && player.hand.length === 0) {
       player.isOut = true;
       player.finishOrder = nextOrder;
       nextOrder += 1;
@@ -805,12 +864,14 @@ function assignFinishedPlayers(room) {
 }
 
 function maybeFinishRoom(room) {
-  const activePlayers = room.players.filter(player => !player.isOut);
+  const activePlayers = room.players.filter(player => !player.isOut && !player.kicked);
   if (activePlayers.length > 1) return false;
   room.phase = 'finished';
   room.turnPlayerId = null;
   if (activePlayers[0]) {
-    activePlayers[0].finishOrder = room.players.length;
+    const kickedPlayers = room.players.filter(player => player.kicked);
+    const normalAssigned = room.players.filter(player => player.finishOrder !== null && !player.kicked).length;
+    activePlayers[0].finishOrder = kickedPlayers.length > 0 ? normalAssigned + 1 : room.players.length;
     activePlayers[0].isOut = true;
   }
   const ordered = room.players.slice().sort((a, b) => (a.finishOrder || 999) - (b.finishOrder || 999));

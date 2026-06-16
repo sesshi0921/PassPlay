@@ -29,6 +29,7 @@ window.PassPlay.register(async api => {
     pairSelectionDeadline: 0,
     pairSelectionTimer: null,
     turnCountdownTimer: null,
+    disconnectCountdownTimer: null,
     initialSweepKey: '',
     initialSweepTimers: [],
     initialCheckingCardIds: new Set(),
@@ -255,6 +256,7 @@ window.PassPlay.register(async api => {
 
     renderPairing(snapshot);
     renderTurnCountdown(snapshot);
+    renderDisconnectCountdown(snapshot);
     renderRing(snapshot, me?.playerId);
     renderDiscardPile(publicState.discardPile || []);
     renderTargetStack(snapshot, targetPlayer);
@@ -284,10 +286,18 @@ window.PassPlay.register(async api => {
       if (player.id === publicState.turnPlayerId) chip.classList.add('is-turn');
       if (player.id === publicState.targetPlayerId) chip.classList.add('is-target');
       if (player.isOut) chip.classList.add('is-out');
+      if (player.isConnected === false && !player.kicked) chip.classList.add('is-disconnected');
 
       const icon = document.createElement('div');
       icon.className = 'table-player-icon';
       icon.textContent = '👤';
+      const disconnectRemain = disconnectSeconds(player);
+      if (disconnectRemain !== null) {
+        const badge = document.createElement('span');
+        badge.className = 'disconnect-badge';
+        badge.textContent = String(disconnectRemain);
+        icon.appendChild(badge);
+      }
 
       const name = document.createElement('div');
       name.className = 'table-player-name';
@@ -700,6 +710,27 @@ window.PassPlay.register(async api => {
     }
   }
 
+  function renderDisconnectCountdown(snapshot) {
+    clearDisconnectCountdown();
+    const hasCountdown = snapshot.players.some(player => disconnectSeconds(player) !== null);
+    if (!hasCountdown) return;
+    state.disconnectCountdownTimer = window.setInterval(() => {
+      if (state.snapshot?.privateState) renderRing(state.snapshot, state.snapshot.me?.playerId);
+    }, 250);
+  }
+
+  function clearDisconnectCountdown() {
+    if (state.disconnectCountdownTimer) {
+      clearInterval(state.disconnectCountdownTimer);
+      state.disconnectCountdownTimer = null;
+    }
+  }
+
+  function disconnectSeconds(player) {
+    if (!player || player.kicked || player.isConnected !== false || !player.disconnectDeadlineAt) return null;
+    return Math.max(0, Math.ceil((player.disconnectDeadlineAt - Date.now()) / 1000));
+  }
+
   function canRenderPlaySurface(moveAt = 0) {
     if (state.snapshot?.phase === 'playing') return true;
     return !!moveAt && state.snapshot?.phase === 'finished' && state.pendingResultMoveAt === moveAt;
@@ -911,6 +942,7 @@ window.PassPlay.register(async api => {
     clearPairSelection();
     clearInitialSweep();
     clearTurnCountdown();
+    clearDisconnectCountdown();
     clearPendingResult();
     state.completedResultDelayMoveAt = 0;
     state.removalAnim = null;
@@ -934,6 +966,7 @@ window.PassPlay.register(async api => {
     clearPairSelection();
     clearInitialSweep();
     clearTurnCountdown();
+    clearDisconnectCountdown();
     clearPendingResult();
     state.completedResultDelayMoveAt = 0;
     state.removalAnim = null;
@@ -958,6 +991,7 @@ window.PassPlay.register(async api => {
       clearPairSelection();
       clearInitialSweep();
       clearTurnCountdown();
+      clearDisconnectCountdown();
       clearPendingResult();
       state.completedResultDelayMoveAt = 0;
       show('setup');

@@ -493,7 +493,12 @@ body {
   color: #8b1a1a;
 }
 
+.table-player.is-disconnected .table-player-icon {
+  border-color: #8b1a1a;
+}
+
 .table-player-icon {
+  position: relative;
   width: 44px;
   height: 44px;
   margin: 0 auto 6px;
@@ -503,6 +508,25 @@ body {
   border: 2px solid #111;
   background: #fff;
   font-size: 22px;
+}
+
+.disconnect-badge {
+  position: absolute;
+  right: -9px;
+  top: -9px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  background: #d82020;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, .18);
 }
 
 .table-player-name {
