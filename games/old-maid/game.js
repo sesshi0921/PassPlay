@@ -236,7 +236,7 @@ window.PassPlay.register(async api => {
     try {
       const name = playerName();
       saveName(name);
-      const roomId = $joinRoomId.value.trim().toUpperCase();
+      const roomId = $joinRoomId.value.trim();
       const snapshot = await api.room.join({ roomId, playerName: name, transport: 'http' });
       setSnapshot(snapshot);
     } catch (error) {

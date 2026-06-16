@@ -7,8 +7,8 @@
 <meta name="passplay-plugin-id" content="old-maid">
 <meta name="passplay-api-version" content="1.0">
 <title>ババ抜き | PassPlay</title>
-<link rel="stylesheet" href="./style.css">
 <link rel="stylesheet" href="../../core/game-theme.css">
+<link rel="stylesheet" href="./style.css">
 </head>
 <body>
 <main class="app" data-passplay-plugin-root>
@@ -28,7 +28,7 @@
 
       <label class="field" for="room-label">
         <span>合言葉（空欄なら自動作成）</span>
-        <input id="room-label" class="text-input" type="text" maxlength="16" placeholder="例: BABA123" autocapitalize="characters" autocomplete="off">
+        <input id="room-label" class="text-input" type="text" maxlength="24" placeholder="例: 今日のババ抜き" autocapitalize="none" autocomplete="off">
       </label>
 
       <div class="actions setup-actions">
@@ -39,7 +39,7 @@
         <label class="field" for="join-room-id">
           <span>合言葉で参加</span>
           <div class="join-row">
-            <input id="join-room-id" class="text-input join-code-input" type="text" maxlength="16" placeholder="例: BABA123" autocapitalize="characters" autocomplete="off">
+            <input id="join-room-id" class="text-input join-code-input" type="text" maxlength="24" placeholder="例: 今日のババ抜き" autocapitalize="none" autocomplete="off">
             <button id="join-room" class="btn btn-ghost join-button" type="button">参加</button>
           </div>
         </label>

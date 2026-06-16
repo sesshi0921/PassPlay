@@ -156,6 +156,7 @@
       const payload = await request('POST', '/rooms', {
         gameId,
         playerName: options.playerName,
+        roomLabel: options.roomLabel,
         transport,
       });
       persistSessionFromPayload(payload, transport);

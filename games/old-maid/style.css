@@ -14,7 +14,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  padding: calc(12px + var(--safe-top)) 14px calc(14px + var(--safe-bottom));
+  padding: calc(18px + var(--safe-top)) 14px calc(14px + var(--safe-bottom));
   gap: 14px;
 }
 
@@ -44,7 +44,7 @@ body {
 .phase[data-phase="room"],
 .phase[data-phase="play"] {
   justify-content: flex-start;
-  padding-top: 18px;
+  padding-top: calc(8px + var(--safe-top));
 }
 
 .title,
@@ -132,8 +132,7 @@ body {
 }
 
 .join-code-input {
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0;
 }
 
 .join-button {
@@ -177,6 +176,8 @@ body {
 
 .room-hero {
   align-items: flex-start;
+  padding-top: 22px;
+  min-height: 176px;
 }
 
 .eyebrow {
@@ -198,6 +199,7 @@ body {
 
 .room-leave-button {
   align-self: flex-end;
+  margin-top: auto;
   min-width: 88px;
 }
 
@@ -225,12 +227,12 @@ body {
   font-weight: 800;
 }
 
-.count-badge {
+.panel-head .count-badge {
   background: var(--text);
   color: #fff !important;
 }
 
-.mini-note {
+.panel-head .mini-note {
   background: #e7e7e3;
   color: var(--text-soft) !important;
 }
@@ -268,7 +270,7 @@ body {
   flex-wrap: wrap;
 }
 
-.pill {
+.player-meta .pill {
   display: inline-flex;
   align-items: center;
   min-height: 22px;
@@ -280,7 +282,7 @@ body {
   font-weight: 700;
 }
 
-.pill.out {
+.player-meta .pill.out {
   background: #d9d9d5;
   color: var(--text);
 }
