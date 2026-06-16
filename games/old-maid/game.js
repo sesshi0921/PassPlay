@@ -1,3 +1,18 @@
+(() => {
+  'use strict';
+
+  const directParams = new URLSearchParams(window.location.search);
+  if (window.parent === window && directParams.get('room')) {
+    const redirect = new URL('../../play.html', window.location.href);
+    redirect.searchParams.set('game', 'old-maid');
+    redirect.searchParams.set('mode', 'multi');
+    redirect.searchParams.set('room', directParams.get('room'));
+    const api = directParams.get('api');
+    if (api) redirect.searchParams.set('api', api);
+    window.location.replace(redirect.toString());
+  }
+})();
+
 window.PassPlay.register(async api => {
   'use strict';
 
@@ -35,7 +50,9 @@ window.PassPlay.register(async api => {
   }
 
   function getInviteUrl(roomLabel) {
-    const url = new URL(window.location.href);
+    const url = new URL('../../play.html', window.location.href);
+    url.searchParams.set('game', 'old-maid');
+    url.searchParams.set('mode', 'multi');
     url.searchParams.set('room', roomLabel);
     return url.toString();
   }
@@ -81,7 +98,8 @@ window.PassPlay.register(async api => {
     localStorage.setItem(USERNAME_STORAGE_KEY, value);
   }
 
-  function renderPlayers(target, players) {
+  function renderPlayers(target, players, options = {}) {
+    const showCardCount = !!options.showCardCount;
     target.innerHTML = '';
     for (const player of players) {
       const li = document.createElement('li');
@@ -90,7 +108,7 @@ window.PassPlay.register(async api => {
       const meta = document.createElement('div');
       meta.className = 'player-meta';
       if (player.isHost) meta.appendChild(makePill('HOST'));
-      if (player.cardCount !== undefined) meta.appendChild(makePill(`${player.cardCount}枚`));
+      if (showCardCount && player.cardCount !== undefined) meta.appendChild(makePill(`${player.cardCount}枚`));
       if (player.finishOrder) meta.appendChild(makePill(`${player.finishOrder}位`, player.isOut ? 'out' : ''));
       if (player.isOut && !player.finishOrder) meta.appendChild(makePill('OUT', 'out'));
       li.appendChild(name);
@@ -118,8 +136,9 @@ window.PassPlay.register(async api => {
     $inviteUrl.value = getInviteUrl(snapshot.roomLabel || snapshot.roomId);
     $roomStatus.textContent = phaseLabel(snapshot.phase);
 
-    renderPlayers($playersList, snapshot.players);
-    renderPlayers($publicPlayers, snapshot.players);
+    const showCardCount = snapshot.phase !== 'waiting';
+    renderPlayers($playersList, snapshot.players, { showCardCount });
+    renderPlayers($publicPlayers, snapshot.players, { showCardCount });
 
     renderPlay(snapshot);
     renderResult(snapshot);

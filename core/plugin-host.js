@@ -145,10 +145,10 @@
       roomClient.setApiBase(apiBase);
       return roomClient.getApiBase();
     },
-    async 'room.create'({ playerName, transport }) {
+    async 'room.create'({ playerName, transport, roomLabel }) {
       requirePermission('room:write');
       if (activeMode !== 'multi') throw new Error('multi モードでのみ使用できます');
-      return roomClient.createRoom({ playerName, transport });
+      return roomClient.createRoom({ playerName, transport, roomLabel });
     },
     async 'room.join'({ roomId, playerName, transport }) {
       requirePermission('room:write');
@@ -269,7 +269,13 @@
       frame.sandbox = 'allow-scripts allow-same-origin allow-forms allow-pointer-lock';
       frame.allow = 'fullscreen';
       window.addEventListener('message', handleMessage);
-      frame.src = `./games/${activePlugin.id}/${activePlugin.entry}`;
+      const frameUrl = new URL(`./games/${activePlugin.id}/${activePlugin.entry}`, window.location.href);
+      const pageParams = new URLSearchParams(window.location.search);
+      const roomParam = pageParams.get('room');
+      const apiParam = pageParams.get('api');
+      if (roomParam) frameUrl.searchParams.set('room', roomParam);
+      if (apiParam) frameUrl.searchParams.set('api', apiParam);
+      frame.src = frameUrl.toString();
       host.appendChild(frame);
       loadTimer = setTimeout(() => {
         if (frame && frame.hidden) {
