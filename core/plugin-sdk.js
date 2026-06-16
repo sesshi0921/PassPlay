@@ -10,6 +10,7 @@
   const embedded = window.parent !== window;
   const pending = new Map();
   const lifecycleListeners = new Map();
+  const roomListeners = new Set();
   let resolveHostReady = null;
   const hostReady = embedded
     ? new Promise(resolve => { resolveHostReady = resolve; })
@@ -50,8 +51,8 @@
   const directHandlers = {
     'context.get': () => ({
       apiVersion: API_VERSION,
-      plugin: { id: pluginId, name: document.title, version: 'direct', permissions: [] },
-      environment: { locale: document.documentElement.lang || 'ja', standalone: false },
+      plugin: { id: pluginId, name: document.title, version: 'direct', permissions: [], modes: ['single'] },
+      environment: { locale: document.documentElement.lang || 'ja', standalone: false, mode: 'single' },
     }),
     'players.list': () => parsePlayers(),
     'storage.get': ({ key }) => {
@@ -70,6 +71,23 @@
       window.location.href = '../../index.html';
       return true;
     },
+    'room.getSession': () => null,
+    'room.create': () => {
+      throw new Error('Room API is not available outside PassPlay host');
+    },
+    'room.join': () => {
+      throw new Error('Room API is not available outside PassPlay host');
+    },
+    'room.sync': () => {
+      throw new Error('Room API is not available outside PassPlay host');
+    },
+    'room.start': () => {
+      throw new Error('Room API is not available outside PassPlay host');
+    },
+    'room.action': () => {
+      throw new Error('Room API is not available outside PassPlay host');
+    },
+    'room.leave': () => true,
   };
 
   async function request(method, args = {}) {
@@ -148,6 +166,10 @@
       else callback.reject(new Error(message.error || 'PassPlay API request failed'));
       return;
     }
+    if (message.type === 'room-state') {
+      for (const listener of roomListeners) listener(message.snapshot || null);
+      return;
+    }
     if (message.type === 'lifecycle') emitLifecycle(message.event);
   });
 
@@ -163,6 +185,11 @@
     };
     sendHello();
     helloTimer = setInterval(sendHello, 250);
+    window.parent.postMessage({
+      protocol: PROTOCOL,
+      pluginId,
+      type: 'room-subscribe',
+    }, window.location.origin);
   }
 
   async function register(initializer) {
@@ -213,6 +240,22 @@
     }),
     navigation: Object.freeze({
       home: () => request('navigation.home'),
+    }),
+    room: Object.freeze({
+      getApiBase: () => request('room.getApiBase'),
+      setApiBase: apiBase => request('room.setApiBase', { apiBase }),
+      getSession: () => request('room.getSession'),
+      create: options => request('room.create', options),
+      join: options => request('room.join', options),
+      sync: () => request('room.sync'),
+      start: () => request('room.start'),
+      action: action => request('room.action', { action }),
+      leave: () => request('room.leave'),
+      onStateChange: listener => {
+        if (typeof listener !== 'function') throw new TypeError('listener must be a function');
+        roomListeners.add(listener);
+        return () => roomListeners.delete(listener);
+      },
     }),
     lifecycle: Object.freeze({
       on: onLifecycle,

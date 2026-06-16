@@ -1,0 +1,21 @@
+{
+  "name": "passplay-multi",
+  "main": "workers/passplay-multi.js",
+  "compatibility_date": "2026-06-16",
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "ROOMS",
+        "class_name": "PassPlayRoom"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "PassPlayRoom"
+      ]
+    }
+  ]
+}

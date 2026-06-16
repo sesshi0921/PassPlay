@@ -15,6 +15,7 @@ const CORE_ASSETS = [
   './core/game-theme.css',
   './core/plugin-host.js',
   './core/plugin-sdk.js',
+  './core/room-runtime.js',
   './core/plugin-api.d.ts',
   './core/plugin-manifest.schema.json',
 ];

@@ -1,0 +1,311 @@
+.app {
+  padding: 16px 14px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.phase {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.title {
+  margin: 0;
+  font-size: 28px;
+}
+
+.lead {
+  margin: -4px 0 0;
+  color: #61615d;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.field span {
+  font-size: 13px;
+}
+
+.text-input {
+  width: 100%;
+  min-width: 0;
+  height: 46px;
+  border: 2px solid #b8b8b4;
+  border-radius: 12px;
+  padding: 0 12px;
+  background: #fff;
+  color: #111;
+  font: inherit;
+}
+
+.transport-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.advanced-settings {
+  border: 1px solid #d0d0cc;
+  border-radius: 12px;
+  background: rgba(255,255,255,.72);
+  padding: 10px 12px 12px;
+}
+
+.advanced-settings summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  color: #61615d;
+}
+
+.advanced-settings[open] summary {
+  margin-bottom: 10px;
+}
+
+.field-compact span {
+  font-size: 12px;
+}
+
+.transport-button {
+  min-height: 42px;
+  border: 1px solid #111;
+  border-radius: 12px;
+  background: #fff;
+  color: #111;
+  font: inherit;
+  font-weight: 800;
+}
+
+.transport-button.is-selected {
+  background: #111;
+  color: #fff;
+}
+
+.room-actions,
+.join-row,
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.room-actions,
+.actions {
+  flex-direction: column;
+}
+
+.join-row .text-input {
+  flex: 1;
+}
+
+.btn-secondary {
+  min-width: 96px;
+}
+
+.inline-note {
+  margin: 0;
+  color: #8b1a1a;
+  font-size: 13px;
+}
+
+.room-header,
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #61615d;
+  letter-spacing: 1px;
+}
+
+.room-code {
+  margin: 0;
+  font-size: 30px;
+  letter-spacing: 2px;
+}
+
+.icon-button {
+  width: 42px;
+  height: 42px;
+  border: 1px solid #111;
+  border-radius: 12px;
+  background: #fff;
+  font: inherit;
+  font-size: 24px;
+}
+
+.panel {
+  border: 1px solid #d0d0cc;
+  border-radius: 16px;
+  background: rgba(255,255,255,.92);
+  padding: 14px;
+  box-shadow: 0 8px 18px rgba(0,0,0,.12);
+}
+
+.panel-head h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.badge.subtle {
+  background: #d9d9d5;
+  color: #111;
+}
+
+.players-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.players-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 50px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f4f4f1;
+}
+
+.players-list.compact li {
+  min-height: 44px;
+}
+
+.player-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.pill.out {
+  background: #d9d9d5;
+  color: #111;
+}
+
+.status-panel {
+  gap: 6px;
+}
+
+.turn-label,
+.target-label {
+  margin: 0;
+}
+
+.turn-label {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.target-label {
+  color: #61615d;
+}
+
+.target-hand,
+.my-hand {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.card-button,
+.hand-card {
+  aspect-ratio: 3 / 4;
+  border-radius: 12px;
+  border: 1px solid #111;
+}
+
+.card-button {
+  background:
+    linear-gradient(135deg, #111 0%, #111 20%, #fff 20%, #fff 40%, #111 40%, #111 60%, #fff 60%, #fff 80%, #111 80%);
+  position: relative;
+}
+
+.card-button.appealing {
+  transform: translateY(-8px);
+}
+
+.card-button:disabled {
+  opacity: .52;
+}
+
+.hand-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 10px 8px;
+  background: #fff;
+  font-weight: 800;
+}
+
+.hand-card.appealing {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 18px rgba(0,0,0,.16);
+}
+
+.hand-card-name {
+  font-size: 19px;
+}
+
+.hand-card-toggle {
+  font-size: 11px;
+  color: #61615d;
+}
+
+.result-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sticky-actions {
+  position: sticky;
+  bottom: 0;
+}

@@ -1,0 +1,12 @@
+{
+  "name": "passplay",
+  "private": true,
+  "scripts": {
+    "build:games": "node build_games.js",
+    "cf:dev": "wrangler dev",
+    "cf:deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.100.0"
+  }
+}

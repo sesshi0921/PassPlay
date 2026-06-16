@@ -14,7 +14,10 @@ const ALLOWED_PERMISSIONS = new Set([
   'storage:read',
   'storage:write',
   'navigation',
+  'room:read',
+  'room:write',
 ]);
+const ALLOWED_MODES = new Set(['single', 'multi']);
 const ALLOWED_META_KEYS = new Set([
   'name',
   'version',
@@ -25,6 +28,7 @@ const ALLOWED_META_KEYS = new Set([
   'min',
   'max',
   'permissions',
+  'modes',
   'assets',
 ]);
 
@@ -125,12 +129,20 @@ function validateMeta(id, meta) {
   const entry = validateRelativePath(meta.entry, `${id}: entry`);
   const icon = validateRelativePath(meta.icon || 'icon.png', `${id}: icon`);
   const permissions = meta.permissions;
+  const modes = meta.modes;
   const assets = meta.assets;
 
   assert(Array.isArray(permissions), `${id}: permissions は配列で指定してください`);
   assert(new Set(permissions).size === permissions.length, `${id}: permissions に重複があります`);
   for (const permission of permissions) {
     assert(ALLOWED_PERMISSIONS.has(permission), `${id}: 未対応の権限です: ${permission}`);
+  }
+  if (modes !== undefined) {
+    assert(Array.isArray(modes) && modes.length > 0, `${id}: modes は1件以上の配列で指定してください`);
+    assert(new Set(modes).size === modes.length, `${id}: modes に重複があります`);
+    for (const mode of modes) {
+      assert(ALLOWED_MODES.has(mode), `${id}: 未対応の mode です: ${mode}`);
+    }
   }
   assert(Array.isArray(assets) && assets.length > 0, `${id}: assets は1件以上必要です`);
   assert(new Set(assets).size === assets.length, `${id}: assets に重複があります`);
@@ -165,6 +177,7 @@ function main() {
       entry: meta.entry,
       icon: meta.icon || 'icon.png',
       permissions: [...new Set(meta.permissions)],
+      modes: [...new Set(meta.modes || ['single'])],
       assets: [...new Set(meta.assets)],
       ...(meta.min !== undefined && { min: meta.min }),
       ...(meta.max !== undefined && { max: meta.max }),

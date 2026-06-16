@@ -54,7 +54,20 @@
           "players:read",
           "storage:read",
           "storage:write",
-          "navigation"
+          "navigation",
+          "room:read",
+          "room:write"
+        ]
+      }
+    },
+    "modes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "single",
+          "multi"
         ]
       }
     },

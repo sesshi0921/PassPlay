@@ -12,6 +12,12 @@
 |---|---|---|
 | [ワードウルフ](./word-wolf.md) | 3〜16人 | 似た単語に紛れ込んだ人狼を見つける議論ゲーム |
 
+## 設計メモ
+
+- [みんなのスマホ設計メモ](./multi-device-design.md)
+- [multiplayer 通信仕様](./multiplayer-protocol.md)
+- [Cloudflare セットアップ](./cloudflare-setup.md)
+
 ## 共通の遊び方
 
 1. プレイページを開く

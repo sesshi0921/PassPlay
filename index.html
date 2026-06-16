@@ -95,14 +95,9 @@
     data-mode-panel="multi"
     hidden
   >
-    <section class="multi-empty" aria-labelledby="multi-empty-title">
-      <div class="multi-empty-icon" aria-hidden="true">
-        <span></span><span></span><span></span>
-      </div>
-      <p class="multi-empty-label">MULTI DEVICE</p>
-      <h2 id="multi-empty-title">対応ゲーム準備中</h2>
-      <p>ルームを作って、それぞれのスマホから参加できるゲームを追加予定です。</p>
-      <div class="multi-empty-status">ゲーム 0件</div>
+    <section class="games-section">
+      <h2 id="multi-empty-title" class="section-title">みんなのスマホで遊べるゲーム</h2>
+      <div id="multi-games-grid" class="games-grid" aria-live="polite"></div>
     </section>
     <section class="multi-profile home-control-card" aria-labelledby="multi-username-label">
       <label id="multi-username-label" for="multi-username">あなたの名前</label>

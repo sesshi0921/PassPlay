@@ -32,6 +32,7 @@ games/example-game/
   "min": 2,
   "max": 4,
   "permissions": ["players:read", "navigation"],
+  "modes": ["single"],
   "assets": ["index.html", "game.js", "style.css", "icon.png"]
 }
 ```
@@ -42,6 +43,7 @@ games/example-game/
 - `permissions`: 使用するホストAPIの権限
 - `assets`: オフラインキャッシュへ含める全ファイル
 - `min` / `max`: 対応プレーヤー数
+- `modes`: 対応モード。省略時は`single`
 
 ## HTMLインターフェース
 
@@ -119,6 +121,17 @@ await api.storage.remove('settings');
 
 ```js
 await api.navigation.home();
+```
+
+### ルーム通信
+
+権限: 読み込みは`room:read`、変更は`room:write`
+
+```js
+const session = await api.room.getSession();
+const snapshot = await api.room.create({ playerName: 'Host', transport: 'http' });
+const joined = await api.room.join({ roomId: 'ABCD12', playerName: 'Guest', transport: 'ws' });
+await api.room.action({ type: 'draw-card', payload: { slot: 2 } });
 ```
 
 ### アセット

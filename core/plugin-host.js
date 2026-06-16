@@ -5,11 +5,14 @@
   const API_VERSION = '1.0';
   const PLAYER_STORAGE_KEY = 'passplay.players';
   const PLUGIN_STORAGE_PREFIX = 'passplay.plugin.';
+  const VALID_MODES = new Set(['single', 'multi']);
   const ALLOWED_PERMISSIONS = new Set([
     'players:read',
     'storage:read',
     'storage:write',
     'navigation',
+    'room:read',
+    'room:write',
   ]);
 
   const host = document.getElementById('plugin-host');
@@ -20,6 +23,8 @@
   let activePlugin = null;
   let frame = null;
   let loadTimer = null;
+  let activeMode = 'single';
+  let roomClient = null;
 
   function fail(message) {
     loading.hidden = true;
@@ -50,6 +55,12 @@
     if (!Array.isArray(plugin.permissions)) throw new Error('権限定義が不正です');
     for (const permission of plugin.permissions) {
       if (!ALLOWED_PERMISSIONS.has(permission)) throw new Error(`未対応の権限です: ${permission}`);
+    }
+    if (plugin.modes !== undefined) {
+      if (!Array.isArray(plugin.modes) || plugin.modes.length === 0) throw new Error('対応モードが不正です');
+      for (const mode of plugin.modes) {
+        if (!VALID_MODES.has(mode)) throw new Error(`未対応のモードです: ${mode}`);
+      }
     }
   }
 
@@ -86,10 +97,12 @@
           name: activePlugin.name,
           version: activePlugin.version,
           permissions: activePlugin.permissions.slice(),
+          modes: (activePlugin.modes || ['single']).slice(),
         },
         environment: {
           locale: document.documentElement.lang || 'ja',
           standalone: window.matchMedia('(display-mode: standalone)').matches,
+          mode: activeMode,
         },
       };
     },
@@ -117,6 +130,50 @@
       requirePermission('navigation');
       window.location.href = './index.html';
       return true;
+    },
+    'room.getSession'() {
+      requirePermission('room:read');
+      return roomClient ? roomClient.getSession() : null;
+    },
+    'room.getApiBase'() {
+      requirePermission('room:read');
+      return roomClient ? roomClient.getApiBase() : '';
+    },
+    'room.setApiBase'({ apiBase }) {
+      requirePermission('room:write');
+      if (!roomClient) throw new Error('room client is not available');
+      roomClient.setApiBase(apiBase);
+      return roomClient.getApiBase();
+    },
+    async 'room.create'({ playerName, transport }) {
+      requirePermission('room:write');
+      if (activeMode !== 'multi') throw new Error('multi モードでのみ使用できます');
+      return roomClient.createRoom({ playerName, transport });
+    },
+    async 'room.join'({ roomId, playerName, transport }) {
+      requirePermission('room:write');
+      if (activeMode !== 'multi') throw new Error('multi モードでのみ使用できます');
+      return roomClient.joinRoom({ roomId, playerName, transport });
+    },
+    async 'room.sync'() {
+      requirePermission('room:read');
+      if (activeMode !== 'multi') throw new Error('multi モードでのみ使用できます');
+      return roomClient.sync();
+    },
+    async 'room.start'() {
+      requirePermission('room:write');
+      if (activeMode !== 'multi') throw new Error('multi モードでのみ使用できます');
+      return roomClient.start();
+    },
+    async 'room.action'({ action }) {
+      requirePermission('room:write');
+      if (activeMode !== 'multi') throw new Error('multi モードでのみ使用できます');
+      return roomClient.sendAction(action);
+    },
+    async 'room.leave'() {
+      requirePermission('room:write');
+      if (!roomClient) return true;
+      return roomClient.leave();
     },
   };
 
@@ -165,11 +222,21 @@
     }
     if (message.type === 'request') {
       handleRequest(message);
+      return;
+    }
+    if (message.type === 'room-subscribe') {
+      if (!roomClient) return;
+      if (handleMessage.roomUnsubscribe) handleMessage.roomUnsubscribe();
+      handleMessage.roomUnsubscribe = roomClient.subscribe(currentSnapshot => {
+        send({ type: 'room-state', snapshot: currentSnapshot });
+      });
     }
   }
 
   async function start() {
     const pluginId = new URLSearchParams(window.location.search).get('game');
+    const requestedMode = new URLSearchParams(window.location.search).get('mode');
+    activeMode = VALID_MODES.has(requestedMode) ? requestedMode : 'single';
     if (!pluginId || !/^[a-z0-9-]+$/.test(pluginId)) {
       fail('ゲームIDが指定されていません');
       return;
@@ -181,6 +248,18 @@
       const plugins = await response.json();
       activePlugin = Array.isArray(plugins) ? plugins.find(plugin => plugin.id === pluginId) : null;
       validatePlugin(activePlugin, pluginId);
+      const pluginModes = activePlugin.modes || ['single'];
+      if (!pluginModes.includes(activeMode)) {
+        throw new Error(`このゲームは ${activeMode} モードに対応していません`);
+      }
+      if (activeMode === 'multi') {
+        if (!window.PassPlayRoomRuntime) throw new Error('room runtime を読み込めません');
+        roomClient = window.PassPlayRoomRuntime.createClient({
+          gameId: activePlugin.id,
+          roomId: new URLSearchParams(window.location.search).get('room'),
+          apiBase: new URLSearchParams(window.location.search).get('api'),
+        });
+      }
 
       document.title = `${activePlugin.name} | PassPlay`;
       frame = document.createElement('iframe');
@@ -206,6 +285,7 @@
 
   window.addEventListener('pagehide', () => {
     send({ type: 'lifecycle', event: 'deactivate' });
+    roomClient?.dispose();
   });
 
   start();

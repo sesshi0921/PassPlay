@@ -1,0 +1,13 @@
+{
+  "name": "ババ抜き",
+  "version": "1.0.0",
+  "apiVersion": "1.0",
+  "entry": "index.html",
+  "icon": "icon.svg",
+  "description": "各自のスマホから参加する multiplayer 版のババ抜き。最大2枚をアピールしながら遊べます。",
+  "min": 2,
+  "max": 8,
+  "permissions": ["navigation", "room:read", "room:write", "storage:read", "storage:write"],
+  "modes": ["multi"],
+  "assets": ["index.html", "game.js", "style.css", "icon.svg"]
+}

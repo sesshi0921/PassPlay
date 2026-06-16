@@ -10,6 +10,7 @@
   const MAX_NAME_LEN = 16;
 
   const $grid = document.getElementById('games-grid');
+  const $multiGrid = document.getElementById('multi-games-grid');
   const $list = document.getElementById('players-list');
   const $count = document.getElementById('players-count');
   const $form = document.getElementById('player-form');
@@ -155,18 +156,24 @@
 
     renderMarquee(games);
     const sortedGames = sortGamesByMinimumPlayers(games);
-    $grid.innerHTML = '';
-    if (sortedGames.length === 0) {
+    renderGameGrid($grid, sortedGames.filter(game => (game.modes || ['single']).includes('single')), 'ゲーム未登録', 'single');
+    renderGameGrid($multiGrid, sortedGames.filter(game => (game.modes || ['single']).includes('multi')), '対応ゲーム準備中', 'multi');
+  }
+
+  function renderGameGrid(target, games, emptyText, mode) {
+    if (!target) return;
+    target.innerHTML = '';
+    if (games.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'game-card empty';
-      empty.textContent = 'ゲーム未登録';
-      $grid.appendChild(empty);
+      empty.textContent = emptyText;
+      target.appendChild(empty);
       return;
     }
-    for (const g of sortedGames) {
+    for (const g of games) {
       const a = document.createElement('a');
       a.className = 'game-card';
-      a.href = `./play.html?game=${encodeURIComponent(g.id)}`;
+      a.href = `./play.html?game=${encodeURIComponent(g.id)}&mode=${encodeURIComponent(mode)}`;
       const img = document.createElement('img');
       img.src = `./games/${g.id}/${g.icon || 'icon.png'}`;
       img.alt = g.name || g.id;
@@ -188,9 +195,8 @@
         min.textContent = `${g.min}人~`;
         a.appendChild(min);
       }
-      $grid.appendChild(a);
+      target.appendChild(a);
     }
-    // 奇数で末尾調整: グリッドが2列なので奇数時の見栄えは自然
   }
 
   // プレーヤー描画
