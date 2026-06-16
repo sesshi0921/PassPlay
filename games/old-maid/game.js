@@ -211,14 +211,15 @@ window.PassPlay.register(async api => {
     const ringPlayers = order
       .map(playerId => snapshot.players.find(player => player.id === playerId))
       .filter(Boolean);
+    const positions = getRingPositions(ringPlayers.length);
 
     $playerRing.innerHTML = '';
-    const total = ringPlayers.length;
     ringPlayers.forEach((player, index) => {
-      const angle = total <= 1 ? 270 : 210 + (120 * index) / Math.max(1, total - 1);
       const chip = document.createElement('div');
       chip.className = 'table-player';
-      chip.style.setProperty('--angle', `${angle}deg`);
+      const position = positions[index] || { x: 50, y: 20 };
+      chip.style.left = `${position.x}%`;
+      chip.style.top = `${position.y}%`;
       if (player.id === publicState.turnPlayerId) chip.classList.add('is-turn');
       if (player.id === publicState.targetPlayerId) chip.classList.add('is-target');
       if (player.isOut) chip.classList.add('is-out');
@@ -233,8 +234,7 @@ window.PassPlay.register(async api => {
 
       const meta = document.createElement('div');
       meta.className = 'table-player-meta';
-      if (player.isHost) meta.appendChild(makePill('HOST'));
-      if (player.cardCount !== undefined) meta.appendChild(makePill(`${player.cardCount}枚`));
+      if (player.cardCount !== undefined) meta.appendChild(makeCardCountStack(player.cardCount));
 
       chip.appendChild(icon);
       chip.appendChild(name);
@@ -412,6 +412,42 @@ window.PassPlay.register(async api => {
 
   function truncateName(name, limit) {
     return name.length > limit ? `${name.slice(0, limit)}...` : name;
+  }
+
+  function getRingPositions(count) {
+    if (count <= 0) return [];
+    if (count === 1) return [{ x: 50, y: 16 }];
+    if (count === 2) return [{ x: 24, y: 18 }, { x: 76, y: 18 }];
+    if (count === 3) return [{ x: 16, y: 46 }, { x: 50, y: 16 }, { x: 84, y: 46 }];
+    const positions = [];
+    const radiusX = 34;
+    const radiusY = 30;
+    for (let index = 0; index < count; index += 1) {
+      const angle = (-90 + (180 * index) / (count - 1)) * (Math.PI / 180);
+      positions.push({
+        x: 50 + Math.cos(angle) * radiusX,
+        y: 48 + Math.sin(angle) * radiusY,
+      });
+    }
+    return positions;
+  }
+
+  function makeCardCountStack(count) {
+    const stack = document.createElement('div');
+    stack.className = 'card-count-stack';
+    stack.setAttribute('aria-label', `${count}枚`);
+    const visible = Math.min(4, Math.max(1, count));
+    for (let index = 0; index < visible; index += 1) {
+      const card = document.createElement('span');
+      card.className = 'card-count-stack-card';
+      card.style.setProperty('--stack-card-index', String(index));
+      stack.appendChild(card);
+    }
+    const label = document.createElement('span');
+    label.className = 'card-count-stack-label';
+    label.textContent = String(count);
+    stack.appendChild(label);
+    return stack;
   }
 
   function handleTargetTap(slot) {
