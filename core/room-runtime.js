@@ -94,6 +94,12 @@
     let socketTransport = null;
     let heartbeatTimer = null;
 
+    function notifyEnded(reason) {
+      window.dispatchEvent(new CustomEvent('passplay-room-ended', {
+        detail: { gameId, reason },
+      }));
+    }
+
     function setSnapshot(nextSnapshot) {
       snapshot = nextSnapshot;
       emitter.emit(nextSnapshot);
@@ -127,12 +133,21 @@
     }
 
     async function request(method, path, body, params) {
-      const response = await fetch(buildUrl(resolvedApiBase, path, params), {
-        method,
-        headers: body ? { 'content-type': 'application/json' } : undefined,
-        body: body ? JSON.stringify(body) : undefined,
-      });
-      return readJson(response);
+      try {
+        const response = await fetch(buildUrl(resolvedApiBase, path, params), {
+          method,
+          headers: body ? { 'content-type': 'application/json' } : undefined,
+          body: body ? JSON.stringify(body) : undefined,
+        });
+        return await readJson(response);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (message === 'invalid session' || message === 'room session not found') {
+          clearSession();
+          notifyEnded('kicked');
+        }
+        throw error;
+      }
     }
 
     function persistSessionFromPayload(payload, transportHint) {

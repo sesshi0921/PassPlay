@@ -427,6 +427,7 @@ export class PassPlayRoom {
         turnPlayerId: this.room.turnPlayerId,
         targetPlayerId,
         turnOrder: this.room.turnOrder.slice(),
+        turnDeadlineAt: this.room.turnPlayerId ? ((this.playerById(this.room.turnPlayerId)?.turnStartedAt || Date.now()) + TURN_TIMEOUT_MS) : null,
         discardPile: (this.room.discardPile || []).slice(-12),
         lastMove: this.room.lastMove || null,
         dealStartedAt: this.room.dealStartedAt || null,
@@ -909,7 +910,7 @@ function normalizeRoomLabel(value) {
 }
 
 function roomIdToLabel(roomId) {
-  return roomId;
+  return String(roomId || '').slice(0, 8);
 }
 
 function roomDirectoryKey(roomLabel) {

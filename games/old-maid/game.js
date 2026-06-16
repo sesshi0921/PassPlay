@@ -14,6 +14,7 @@
   }
 })();
 
+if (window.parent !== window) {
 window.PassPlay.register(async api => {
   'use strict';
 
@@ -27,6 +28,7 @@ window.PassPlay.register(async api => {
     selectedPairCardIds: [],
     pairSelectionDeadline: 0,
     pairSelectionTimer: null,
+    turnCountdownTimer: null,
     removalAnim: null,
     drawAnim: null,
   };
@@ -43,6 +45,7 @@ window.PassPlay.register(async api => {
   const $playersList = document.getElementById('players-list');
   const $playerRing = document.getElementById('player-ring');
   const $turnLabel = document.getElementById('turn-label');
+  const $turnTimer = document.getElementById('turn-timer');
   const $targetLabel = document.getElementById('target-label');
   const $targetPanel = document.getElementById('target-panel');
   const $targetHand = document.getElementById('target-hand');
@@ -177,6 +180,7 @@ window.PassPlay.register(async api => {
       && publicState.turnPlayerId
       && publicState.turnPlayerId !== me?.playerId;
     const isPairing = snapshot.phase === 'pairing';
+    document.body.dataset.oldMaidPhase = snapshot.phase;
 
     $turnLabel.textContent = isPairing
       ? '手札の準備'
@@ -197,6 +201,7 @@ window.PassPlay.register(async api => {
       : '';
 
     renderPairing(snapshot);
+    renderTurnCountdown(snapshot);
     renderRing(snapshot, me?.playerId);
     renderDiscardPile(publicState.discardPile || []);
     renderTargetStack(snapshot, targetPlayer);
@@ -279,11 +284,24 @@ window.PassPlay.register(async api => {
       return;
     }
     const canDraw = !!snapshot.privateState?.canDraw;
-    $targetPanel.hidden = !targetPlayer;
+    $targetPanel.hidden = !targetPlayer || !canDraw;
     $targetHand.innerHTML = '';
-    if (!targetPlayer) return;
+    if (!targetPlayer || !canDraw) {
+      state.selectedTargetSlot = null;
+      state.lastTargetTapAt = 0;
+      return;
+    }
 
-    (targetPlayer.handPreview || []).forEach((preview, index) => {
+    const previews = targetPlayer.handPreview || [];
+    layoutCardFan($targetHand, previews.length, {
+      minWidth: 38,
+      maxWidth: 66,
+      heightRatio: 1.42,
+      minStep: 18,
+      maxStep: 34,
+      fallbackWidth: 332,
+    });
+    previews.forEach((preview, index) => {
       const button = document.createElement('button');
       button.className = 'stack-card';
       button.type = 'button';
@@ -295,10 +313,6 @@ window.PassPlay.register(async api => {
       $targetHand.appendChild(button);
     });
 
-    if (!canDraw) {
-      state.selectedTargetSlot = null;
-      state.lastTargetTapAt = 0;
-    }
   }
 
   function renderPairing(snapshot) {
@@ -312,15 +326,15 @@ window.PassPlay.register(async api => {
     const previousPhase = state.previousSnapshot?.phase;
     const allReady = (snapshot.publicState?.pairReadyPlayerIds || []).length === snapshot.players.length;
     $pairingTitle.textContent = previousPhase === 'waiting'
-      ? '手札を配っています...'
+      ? '手札を配っています'
       : allReady
-        ? '先手を決めています...'
-        : 'そろった札を捨ててください';
+        ? '先手を決めています'
+        : 'そろった札を捨てる';
     $pairingNote.textContent = allReady
-      ? '全員の準備が終わりました。ランダムに先手を選んでいます。'
+      ? '全員準備完了。ランダムに開始します。'
       : snapshot.privateState?.pairReady
-        ? 'あなたは準備完了です。ほかのプレイヤーを待っています。'
-        : '手札から2枚を上げて、もう一度そのカードをクリックすると捨てられます。';
+        ? 'ほかのプレイヤーを待っています。'
+        : '同じ数字を2枚上げて再タップ。';
 
     $pairingReady.disabled = !snapshot.privateState?.canReadyPairs || !!snapshot.privateState?.pairReady;
     if (snapshot.privateState?.pairReady) {
@@ -330,12 +344,20 @@ window.PassPlay.register(async api => {
       ensurePairSelectionTimer();
       renderPairSelectionTimer();
     } else {
-      $pairingTimer.textContent = snapshot.privateState?.canReadyPairs ? 'READY' : '15';
+      $pairingTimer.textContent = snapshot.privateState?.canReadyPairs ? 'OK' : '15';
     }
   }
 
   function renderMyHand(hand) {
     $myHand.innerHTML = '';
+    layoutCardFan($myHand, hand.length, {
+      minWidth: 30,
+      maxWidth: 68,
+      heightRatio: 1.42,
+      minStep: 12,
+      maxStep: 46,
+      fallbackWidth: 332,
+    });
     hand.forEach((card, index) => {
       const button = document.createElement('button');
       button.className = 'hand-card';
@@ -361,6 +383,14 @@ window.PassPlay.register(async api => {
   function renderHandOverlay() {
     $handOverlay.innerHTML = '';
     if (!state.removalAnim) return;
+    layoutCardFan($handOverlay, state.snapshot?.privateState?.hand?.length || 1, {
+      minWidth: 30,
+      maxWidth: 68,
+      heightRatio: 1.42,
+      minStep: 12,
+      maxStep: 46,
+      fallbackWidth: 332,
+    });
 
     const ghost = document.createElement('div');
     ghost.className = 'hand-card removal-ghost';
@@ -381,6 +411,7 @@ window.PassPlay.register(async api => {
 
   function renderResult(snapshot) {
     if (snapshot.phase !== 'finished') return;
+    clearTurnCountdown();
     const result = snapshot.publicState?.result;
     const lines = [];
     if (result?.loserPlayerId) {
@@ -446,6 +477,62 @@ window.PassPlay.register(async api => {
     label.textContent = String(count);
     stack.appendChild(label);
     return stack;
+  }
+
+  function layoutCardFan(element, count, options = {}) {
+    const resolvedCount = Math.max(1, count || 1);
+    const bounds = element.getBoundingClientRect();
+    const fallbackWidth = options.fallbackWidth || Math.min(360, Math.max(280, window.innerWidth - 28));
+    const available = Math.max(1, Math.floor((bounds.width || element.clientWidth || fallbackWidth) - 2));
+    const minWidth = options.minWidth || 34;
+    const maxWidth = options.maxWidth || 68;
+    const minStep = options.minStep || 16;
+    const maxStep = options.maxStep || 46;
+    let cardWidth = Math.min(maxWidth, Math.max(minWidth, Math.floor(available * 0.2)));
+    let step = resolvedCount <= 1 ? 0 : Math.floor((available - cardWidth) / (resolvedCount - 1));
+
+    if (step < minStep) {
+      cardWidth = Math.max(minWidth, Math.min(cardWidth, available - (minStep * (resolvedCount - 1))));
+      step = resolvedCount <= 1 ? 0 : Math.floor((available - cardWidth) / (resolvedCount - 1));
+    }
+
+    const hardMinStep = Math.min(minStep, 12);
+    step = resolvedCount <= 1 ? 0 : Math.max(hardMinStep, Math.min(maxStep, step));
+    if (resolvedCount > 1 && minWidth + (step * (resolvedCount - 1)) > available) {
+      step = Math.max(8, Math.floor((available - minWidth) / (resolvedCount - 1)));
+    }
+    cardWidth = Math.max(minWidth, Math.min(maxWidth, Math.floor(available - (step * (resolvedCount - 1)))));
+    if (resolvedCount === 1) cardWidth = Math.min(maxWidth, Math.max(minWidth, available));
+
+    const cardHeight = Math.round(cardWidth * (options.heightRatio || 1.42));
+    element.style.setProperty('--hand-count', String(count || 0));
+    element.style.setProperty('--hand-card-width', `${cardWidth}px`);
+    element.style.setProperty('--hand-card-height', `${cardHeight}px`);
+    element.style.setProperty('--hand-step', `${step}px`);
+  }
+
+  function renderTurnCountdown(snapshot) {
+    clearTurnCountdown();
+    const deadline = snapshot.publicState?.turnDeadlineAt;
+    if (snapshot.phase !== 'playing' || !deadline) {
+      $turnTimer.hidden = true;
+      return;
+    }
+    $turnTimer.hidden = false;
+    const update = () => {
+      const remainSeconds = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      $turnTimer.textContent = `${remainSeconds}s`;
+      $turnTimer.classList.toggle('is-danger', remainSeconds <= 10);
+    };
+    update();
+    state.turnCountdownTimer = window.setInterval(update, 250);
+  }
+
+  function clearTurnCountdown() {
+    if (state.turnCountdownTimer) {
+      clearInterval(state.turnCountdownTimer);
+      state.turnCountdownTimer = null;
+    }
   }
 
   function handleTargetTap(slot) {
@@ -642,6 +729,7 @@ window.PassPlay.register(async api => {
     state.selectedTargetSlot = null;
     state.lastTargetTapAt = 0;
     clearPairSelection();
+    clearTurnCountdown();
     state.removalAnim = null;
     state.drawAnim = null;
     show('setup');
@@ -650,12 +738,39 @@ window.PassPlay.register(async api => {
   document.getElementById('leave-room').addEventListener('click', leaveRoom);
   document.getElementById('leave-after-result').addEventListener('click', leaveRoom);
   $copyInvite.addEventListener('click', copyInviteUrl);
+  window.addEventListener('resize', () => {
+    if (state.snapshot?.privateState) renderPlay(state.snapshot);
+  });
+
+  window.addEventListener('passplay-room-ended', event => {
+    state.snapshot = null;
+    state.previousSnapshot = null;
+    state.selectedTargetSlot = null;
+    state.lastTargetTapAt = 0;
+    clearPairSelection();
+    clearTurnCountdown();
+    state.removalAnim = null;
+    state.drawAnim = null;
+    show('setup');
+    const reason = event.detail?.reason;
+    setError(reason === 'kicked'
+      ? '通信が切れたため部屋から退出しました。もう一度参加してください。'
+      : '部屋が終了しました。');
+  });
 
   $playerName.value = localStorage.getItem(USERNAME_STORAGE_KEY) || '';
   $joinRoomId.value = getRoomCodeFromUrl();
 
   api.room.onStateChange(snapshot => {
-    if (snapshot) setSnapshot(snapshot);
+    if (snapshot) {
+      setSnapshot(snapshot);
+    } else if (state.snapshot) {
+      state.snapshot = null;
+      state.previousSnapshot = null;
+      clearPairSelection();
+      clearTurnCountdown();
+      show('setup');
+    }
   });
 
   try {
@@ -669,3 +784,4 @@ window.PassPlay.register(async api => {
     show('setup');
   }
 });
+}
