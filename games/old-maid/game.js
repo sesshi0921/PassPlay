@@ -26,7 +26,9 @@ window.PassPlay.register(async api => {
 
   function show(phase) {
     for (const element of phases) {
-      element.hidden = element.dataset.phase !== phase;
+      const active = element.dataset.phase === phase;
+      element.hidden = !active;
+      element.classList.toggle('is-active', active);
     }
   }
 

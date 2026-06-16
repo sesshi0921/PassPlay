@@ -6,9 +6,13 @@
 }
 
 .phase {
-  display: flex;
+  display: none;
   flex-direction: column;
   gap: 14px;
+}
+
+.phase.is-active {
+  display: flex;
 }
 
 .phase[hidden] {
