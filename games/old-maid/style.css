@@ -586,11 +586,16 @@ body {
 }
 
 .target-overlay {
+  position: fixed;
+  left: 50%;
+  top: min(52dvh, 430px);
+  transform: translate(-50%, -50%);
   width: 100%;
-  max-width: 360px;
+  max-width: min(360px, calc(100vw - 34px));
   min-height: 148px;
-  padding: 8px 0 0;
-  z-index: 8;
+  padding: 10px 0 0;
+  z-index: 24;
+  pointer-events: auto;
 }
 
 .target-overlay-head {
@@ -608,7 +613,7 @@ body {
 .target-stack {
   position: relative;
   min-height: calc(var(--hand-card-height) + 42px);
-  padding: 8px 0 0;
+  padding: 10px 0 0;
   overflow: visible;
 }
 
