@@ -964,7 +964,7 @@ window.PassPlay.register(async api => {
               state.drawInsertGhost = null;
               if (canRenderPlaySurface(nextMove.at)) renderPlay(state.snapshot);
             }
-          }, 260);
+          }, 320);
         }
       }, 820);
 
@@ -976,7 +976,7 @@ window.PassPlay.register(async api => {
             state.releaseGhosts = state.releaseGhosts.filter(ghost => ghost.at !== nextMove.at);
             if (canRenderPlaySurface(nextMove.at)) renderPlay(state.snapshot);
           }, 760);
-        }, 1040);
+        }, 1180);
       }
     }
   }

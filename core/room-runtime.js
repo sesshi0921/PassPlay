@@ -132,6 +132,14 @@
       socketTransport = null;
     }
 
+    function endedFromSocketClose(reasonText) {
+      const reason = String(reasonText || '').toLowerCase();
+      return reason.includes('disconnect-timeout')
+        || reason.includes('kicked')
+        || reason.includes('room closed')
+        || reason.includes('invalid session');
+    }
+
     async function request(method, path, body, params) {
       try {
         const response = await fetch(buildUrl(resolvedApiBase, path, params), {
@@ -306,7 +314,12 @@
         closeSocket();
         schedulePolling(600);
       };
-      socket.onclose = () => {
+      socket.onclose = event => {
+        if (endedFromSocketClose(event?.reason)) {
+          clearSession();
+          notifyEnded('kicked');
+          return;
+        }
         closeSocket();
         schedulePolling(600);
       };
