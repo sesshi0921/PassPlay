@@ -12,6 +12,7 @@ window.PassPlay.register(async api => {
   const $roomCode = document.getElementById('room-code');
   const $playRoomCode = document.getElementById('play-room-code');
   const $inviteUrl = document.getElementById('invite-url');
+  const $copyInvite = document.getElementById('copy-invite');
   const $roomStatus = document.getElementById('room-status');
   const $playersList = document.getElementById('players-list');
   const $publicPlayers = document.getElementById('public-players');
@@ -46,6 +47,28 @@ window.PassPlay.register(async api => {
   function setError(message) {
     $setupError.hidden = !message;
     $setupError.textContent = message || '';
+  }
+
+  async function copyInviteUrl() {
+    const value = $inviteUrl.value.trim();
+    if (!value) return;
+    const originalLabel = $copyInvite.textContent;
+    try {
+      await navigator.clipboard.writeText(value);
+      $copyInvite.textContent = 'コピー済み';
+    } catch {
+      $inviteUrl.focus();
+      $inviteUrl.select();
+      try {
+        document.execCommand('copy');
+        $copyInvite.textContent = 'コピー済み';
+      } catch {
+        $copyInvite.textContent = '失敗';
+      }
+    }
+    window.setTimeout(() => {
+      $copyInvite.textContent = originalLabel;
+    }, 1400);
   }
 
   function playerName() {
@@ -237,6 +260,7 @@ window.PassPlay.register(async api => {
 
   document.getElementById('leave-room').addEventListener('click', leaveRoom);
   document.getElementById('leave-after-result').addEventListener('click', leaveRoom);
+  $copyInvite.addEventListener('click', copyInviteUrl);
 
   $playerName.value = localStorage.getItem(USERNAME_STORAGE_KEY) || '';
   $joinRoomId.value = getRoomCodeFromUrl();

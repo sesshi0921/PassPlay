@@ -44,6 +44,7 @@ body {
 .phase[data-phase="room"],
 .phase[data-phase="play"] {
   justify-content: flex-start;
+  padding-top: 18px;
 }
 
 .title,
@@ -105,6 +106,18 @@ body {
 .text-input[readonly] {
   font-size: 13px;
   color: var(--text-soft);
+}
+
+.invite-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.copy-button {
+  width: 100%;
+  min-height: 48px;
 }
 
 .join-card {
@@ -214,12 +227,12 @@ body {
 
 .count-badge {
   background: var(--text);
-  color: #fff;
+  color: #fff !important;
 }
 
 .mini-note {
   background: #e7e7e3;
-  color: var(--text-soft);
+  color: var(--text-soft) !important;
 }
 
 .players-list {
@@ -262,7 +275,7 @@ body {
   padding: 0 8px;
   border-radius: 999px;
   background: var(--text);
-  color: #fff;
+  color: #fff !important;
   font-size: 11px;
   font-weight: 700;
 }
@@ -343,6 +356,10 @@ body {
 @media (max-width: 380px) {
   .join-row {
     grid-template-columns: minmax(0, 1fr) 92px;
+  }
+
+  .invite-row {
+    grid-template-columns: minmax(0, 1fr) 84px;
   }
 
   .target-hand,
