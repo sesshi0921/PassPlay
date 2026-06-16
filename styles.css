@@ -12,7 +12,6 @@
   --shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
   --radius: 18px;
   --home-control-height: 96px;
-  --home-control-shell-height: calc(var(--home-control-height) + var(--pwa-top-compensation));
   --home-control-gap: 8px;
   --home-control-bottom: calc(var(--home-control-gap) + var(--viewport-bottom) - var(--pwa-top-compensation));
   --safe-top: env(safe-area-inset-top, 0px);
@@ -334,7 +333,7 @@ body {
 }
 .players-section {
   z-index: 50;
-  max-height: var(--home-control-shell-height);
+  max-height: var(--home-control-height);
   display: flex;
   flex-direction: column;
   padding: 0 12px;
@@ -577,8 +576,8 @@ body {
   right: 12px;
   bottom: var(--home-control-bottom);
   width: auto;
-  height: var(--home-control-shell-height);
-  min-height: var(--home-control-shell-height);
+  height: var(--home-control-height);
+  min-height: var(--home-control-height);
   border: 1px solid #c8c8c4;
   border-radius: var(--radius);
   background: rgba(248,248,246,.98);
