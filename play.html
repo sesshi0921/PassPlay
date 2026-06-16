@@ -13,6 +13,16 @@ html,body,#plugin-host,.plugin-frame{background:#f2f2f0!important}
 </head>
 <body>
 <main id="plugin-host" class="plugin-host" aria-live="polite">
+  <button id="plugin-exit-button" class="plugin-exit-button" type="button" aria-haspopup="dialog">退出</button>
+  <div id="plugin-exit-dialog" class="plugin-exit-dialog" role="dialog" aria-modal="true" aria-labelledby="plugin-exit-title" hidden>
+    <div class="plugin-exit-panel">
+      <h2 id="plugin-exit-title">このゲームから退出しますか？</h2>
+      <div class="plugin-exit-actions">
+        <button id="plugin-exit-cancel" class="plugin-exit-cancel" type="button">いいえ</button>
+        <button id="plugin-exit-confirm" class="plugin-exit-confirm" type="button">はい</button>
+      </div>
+    </div>
+  </div>
   <div id="plugin-loading" class="plugin-status plugin-loading">
     <div class="loading-toys" aria-hidden="true">
       <span></span>

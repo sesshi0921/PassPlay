@@ -19,6 +19,10 @@
   const loading = document.getElementById('plugin-loading');
   const errorBox = document.getElementById('plugin-error');
   const errorMessage = document.getElementById('plugin-error-message');
+  const exitButton = document.getElementById('plugin-exit-button');
+  const exitDialog = document.getElementById('plugin-exit-dialog');
+  const exitCancel = document.getElementById('plugin-exit-cancel');
+  const exitConfirm = document.getElementById('plugin-exit-confirm');
 
   let activePlugin = null;
   let frame = null;
@@ -30,6 +34,29 @@
     loading.hidden = true;
     errorMessage.textContent = message;
     errorBox.hidden = false;
+  }
+
+  function openExitDialog() {
+    exitDialog.hidden = false;
+    exitConfirm.focus();
+  }
+
+  function closeExitDialog() {
+    exitDialog.hidden = true;
+    exitButton.focus();
+  }
+
+  async function exitToHome() {
+    exitConfirm.disabled = true;
+    exitCancel.disabled = true;
+    try {
+      send({ type: 'lifecycle', event: 'deactivate' });
+      if (roomClient) await roomClient.leave();
+    } catch (error) {
+      console.warn('[PassPlay] failed to leave room:', error);
+    } finally {
+      window.location.href = './index.html';
+    }
   }
 
   function parsePlayers() {
@@ -292,6 +319,16 @@
   window.addEventListener('pagehide', () => {
     send({ type: 'lifecycle', event: 'deactivate' });
     roomClient?.dispose();
+  });
+
+  exitButton.addEventListener('click', openExitDialog);
+  exitCancel.addEventListener('click', closeExitDialog);
+  exitConfirm.addEventListener('click', exitToHome);
+  exitDialog.addEventListener('click', event => {
+    if (event.target === exitDialog) closeExitDialog();
+  });
+  window.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !exitDialog.hidden) closeExitDialog();
   });
 
   start();

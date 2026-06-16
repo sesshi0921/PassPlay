@@ -48,6 +48,85 @@ html, body {
   display: none;
 }
 
+.plugin-exit-button {
+  position: fixed;
+  top: calc(10px + var(--safe-top));
+  right: 10px;
+  z-index: 30;
+  min-width: 58px;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .92);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  box-shadow: 4px 5px 0 rgba(17,17,17,.14);
+}
+
+.plugin-exit-button:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 3px 0 rgba(17,17,17,.14);
+}
+
+.plugin-exit-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: calc(22px + var(--safe-top)) 22px calc(22px + var(--safe-bottom));
+  background: rgba(17, 17, 17, .42);
+}
+
+.plugin-exit-dialog[hidden] {
+  display: none;
+}
+
+.plugin-exit-panel {
+  width: min(100%, 320px);
+  padding: 22px;
+  border: 2px solid var(--ink);
+  border-radius: 18px;
+  background: #ffffff;
+  color: var(--ink);
+  box-shadow: 8px 10px 0 rgba(17,17,17,.18);
+}
+
+.plugin-exit-panel h2 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+.plugin-exit-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.plugin-exit-cancel,
+.plugin-exit-confirm {
+  min-height: 46px;
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  font: inherit;
+  font-weight: 900;
+}
+
+.plugin-exit-cancel {
+  background: #ffffff;
+  color: var(--ink);
+}
+
+.plugin-exit-confirm {
+  background: var(--ink);
+  color: #ffffff;
+}
+
 .plugin-status {
   min-height: 100%;
   display: grid;
