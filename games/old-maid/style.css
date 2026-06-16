@@ -53,6 +53,7 @@ body {
 }
 
 .setup-card,
+.room-hero,
 .room-card,
 .status-panel,
 .result-summary {
@@ -61,6 +62,7 @@ body {
 }
 
 .setup-card,
+.room-hero,
 .room-card,
 .result-summary {
   display: flex;
@@ -101,6 +103,7 @@ body {
 }
 
 .text-input[readonly] {
+  font-size: 13px;
   color: var(--text-soft);
 }
 
@@ -137,6 +140,10 @@ body {
   max-width: none;
 }
 
+.room-card .actions {
+  width: 100%;
+}
+
 .inline-note {
   width: 100%;
   max-width: 360px;
@@ -155,13 +162,8 @@ body {
   align-items: center;
 }
 
-.room-header {
-  width: 100%;
-  max-width: 360px;
-  display: flex;
+.room-hero {
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
 }
 
 .eyebrow {
@@ -174,12 +176,15 @@ body {
 
 .room-code {
   margin: 0;
-  font-size: 30px;
-  line-height: 1;
-  letter-spacing: 2px;
+  max-width: 100%;
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: 1px;
+  word-break: break-word;
 }
 
 .room-leave-button {
+  align-self: flex-end;
   min-width: 88px;
 }
 

@@ -7,6 +7,10 @@
       {
         "name": "ROOMS",
         "class_name": "PassPlayRoom"
+      },
+      {
+        "name": "ROOM_DIRECTORY",
+        "class_name": "PassPlayRoomDirectory"
       }
     ]
   },
@@ -15,6 +19,12 @@
       "tag": "v1",
       "new_sqlite_classes": [
         "PassPlayRoom"
+      ]
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": [
+        "PassPlayRoomDirectory"
       ]
     }
   ]

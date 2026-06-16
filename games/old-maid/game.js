@@ -33,14 +33,14 @@ window.PassPlay.register(async api => {
     return new URLSearchParams(window.location.search).get('room') || '';
   }
 
-  function getInviteUrl(roomId) {
+  function getInviteUrl(roomLabel) {
     const url = new URL(window.location.href);
-    url.searchParams.set('room', roomId);
+    url.searchParams.set('room', roomLabel);
     return url.toString();
   }
 
   function roomLabelValue() {
-    return ($roomLabel?.value || '').trim().toUpperCase();
+    return ($roomLabel?.value || '').trim();
   }
 
   function setError(message) {
@@ -92,7 +92,7 @@ window.PassPlay.register(async api => {
 
     $roomCode.textContent = snapshot.roomLabel || snapshot.roomId;
     $playRoomCode.textContent = snapshot.roomLabel || snapshot.roomId;
-    $inviteUrl.value = getInviteUrl(snapshot.roomId);
+    $inviteUrl.value = getInviteUrl(snapshot.roomLabel || snapshot.roomId);
     $roomStatus.textContent = phaseLabel(snapshot.phase);
 
     renderPlayers($playersList, snapshot.players);
@@ -239,15 +239,7 @@ window.PassPlay.register(async api => {
   document.getElementById('leave-after-result').addEventListener('click', leaveRoom);
 
   $playerName.value = localStorage.getItem(USERNAME_STORAGE_KEY) || '';
-  if ($roomLabel) {
-    $roomLabel.addEventListener('input', () => {
-      $roomLabel.value = $roomLabel.value.toUpperCase().replace(/[^A-Z0-9_-]/g, '');
-    });
-  }
-  $joinRoomId.value = getRoomCodeFromUrl().toUpperCase();
-  $joinRoomId.addEventListener('input', () => {
-    $joinRoomId.value = $joinRoomId.value.toUpperCase().replace(/[^A-Z0-9_-]/g, '');
-  });
+  $joinRoomId.value = getRoomCodeFromUrl();
 
   api.room.onStateChange(snapshot => {
     if (snapshot) setSnapshot(snapshot);

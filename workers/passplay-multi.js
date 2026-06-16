@@ -25,7 +25,15 @@ export default {
 
     if (parts.length === 2 && request.method === 'POST') {
       const body = await request.json();
-      const roomId = normalizeRoomId(body.roomLabel || body.roomId || '');
+      const roomId = createUlid();
+      const roomLabel = normalizeRoomLabel(body.roomLabel) || roomId.slice(0, 8);
+      const directory = env.ROOM_DIRECTORY.get(env.ROOM_DIRECTORY.idFromName('global'));
+      const reserved = await directory.fetch(new Request('https://directory.internal/reserve', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ roomId, roomLabel }),
+      }));
+      if (!reserved.ok) return withCors(reserved);
       const stub = env.ROOMS.get(env.ROOMS.idFromName(roomId));
       return withCors(await stub.fetch(new Request(`https://room.internal/create`, {
         method: 'POST',
@@ -34,7 +42,27 @@ export default {
           'x-passplay-room-id': roomId,
           'x-passplay-origin': `${url.protocol}//${url.host}`,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, roomId, roomLabel }),
+      })));
+    }
+
+    if (parts.length === 3 && parts[2] === 'join' && request.method === 'POST') {
+      const body = await request.json();
+      const roomLabel = normalizeRoomLabel(body.roomLabel || body.roomId || '');
+      if (!roomLabel) return json({ error: 'passphrase required' }, 400);
+      const directory = env.ROOM_DIRECTORY.get(env.ROOM_DIRECTORY.idFromName('global'));
+      const lookup = await directory.fetch(new Request(`https://directory.internal/lookup?roomLabel=${encodeURIComponent(roomLabel)}`));
+      if (!lookup.ok) return withCors(lookup);
+      const { roomId } = await lookup.json();
+      const stub = env.ROOMS.get(env.ROOMS.idFromName(roomId));
+      return withCors(await stub.fetch(new Request('https://room.internal/join', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-passplay-room-id': roomId,
+          'x-passplay-origin': `${url.protocol}//${url.host}`,
+        },
+        body: JSON.stringify({ ...body, roomId, roomLabel }),
       })));
     }
 
@@ -140,7 +168,7 @@ export class PassPlayRoom {
     const playerId = createId('p');
     const sessionToken = createSecret();
     this.room.gameId = body.gameId;
-    this.room.roomLabel = body.roomLabel ? normalizeRoomLabel(body.roomLabel) : roomIdToLabel(this.room.roomId);
+    this.room.roomLabel = normalizeRoomLabel(body.roomLabel) || roomIdToLabel(this.room.roomId);
     this.room.phase = 'waiting';
     this.room.hostPlayerId = playerId;
     this.room.players = [{
@@ -353,6 +381,41 @@ export class PassPlayRoom {
   }
 }
 
+export class PassPlayRoomDirectory {
+  constructor(ctx) {
+    this.ctx = ctx;
+  }
+
+  async fetch(request) {
+    const url = new URL(request.url);
+    try {
+      if (url.pathname === '/reserve' && request.method === 'POST') {
+        const body = await request.json();
+        const roomId = String(body.roomId || '').trim();
+        const roomLabel = normalizeRoomLabel(body.roomLabel);
+        if (!roomId || !roomLabel) return json({ error: 'invalid room label' }, 400);
+        const key = roomDirectoryKey(roomLabel);
+        const existing = await this.ctx.storage.get(key);
+        if (existing && existing !== roomId) {
+          return json({ error: 'passphrase already in use' }, 409);
+        }
+        await this.ctx.storage.put(key, roomId);
+        return json({ ok: true, roomId, roomLabel });
+      }
+      if (url.pathname === '/lookup' && request.method === 'GET') {
+        const roomLabel = normalizeRoomLabel(url.searchParams.get('roomLabel') || '');
+        if (!roomLabel) return json({ error: 'passphrase required' }, 400);
+        const roomId = await this.ctx.storage.get(roomDirectoryKey(roomLabel));
+        if (!roomId) return json({ error: 'passphrase not found' }, 404);
+        return json({ roomId, roomLabel });
+      }
+      return json({ error: 'not found' }, 404);
+    } catch (error) {
+      return json({ error: error instanceof Error ? error.message : String(error) }, 400);
+    }
+  }
+}
+
 function applyRoomAction(room, playerId, action) {
   if (!action || typeof action.type !== 'string') throw new Error('invalid action');
   if (room.gameId !== 'old-maid') throw new Error('unsupported game');
@@ -527,20 +590,19 @@ function normalizeName(name) {
 }
 
 function normalizeRoomLabel(value) {
-  const trimmed = String(value || '').trim().toUpperCase();
+  const trimmed = String(value || '').trim();
   if (!trimmed) return '';
-  const normalized = trimmed.replace(/[^A-Z0-9_-]/g, '').slice(0, 16);
+  const normalized = trimmed.normalize('NFKC').replace(/\s+/g, ' ').slice(0, 24);
   if (!normalized) throw new Error('invalid room label');
   return normalized;
 }
 
-function normalizeRoomId(value) {
-  const normalized = normalizeRoomLabel(value);
-  return normalized || createRoomId();
-}
-
 function roomIdToLabel(roomId) {
   return roomId;
+}
+
+function roomDirectoryKey(roomLabel) {
+  return `label:${roomLabel.toLowerCase()}`;
 }
 
 function createRoomId() {
@@ -550,6 +612,14 @@ function createRoomId() {
     result += alphabet[randomInt(alphabet.length)];
   }
   return result;
+}
+
+function createUlid() {
+  const time = Date.now();
+  const bytes = new Uint8Array(10);
+  crypto.getRandomValues(bytes);
+  const entropy = bytesToBigInt(bytes);
+  return `${encodeCrockford(BigInt(time), 10)}${encodeCrockford(entropy, 16)}`;
 }
 
 function createId(prefix) {
@@ -582,6 +652,25 @@ function randomToken(length) {
     value += alphabet[randomInt(alphabet.length)];
   }
   return value;
+}
+
+function bytesToBigInt(bytes) {
+  let result = 0n;
+  for (const byte of bytes) {
+    result = (result << 8n) | BigInt(byte);
+  }
+  return result;
+}
+
+function encodeCrockford(value, length) {
+  const alphabet = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+  let current = value;
+  let output = '';
+  while (output.length < length) {
+    output = alphabet[Number(current % 32n)] + output;
+    current /= 32n;
+  }
+  return output.slice(-length);
 }
 
 function json(payload, status = 200) {

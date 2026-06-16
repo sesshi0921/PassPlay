@@ -166,9 +166,10 @@
 
     async function joinRoom(options) {
       const transport = options.transport || 'http';
-      const payload = await request('POST', `/rooms/${encodeURIComponent(options.roomId)}/join`, {
+      const payload = await request('POST', '/rooms/join', {
         gameId,
         playerName: options.playerName,
+        roomLabel: options.roomId,
         transport,
       });
       persistSessionFromPayload(payload, transport);
