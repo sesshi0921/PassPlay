@@ -23,8 +23,13 @@
       </label>
 
       <div class="setup-note">
-        <p>ホストはルームを作成、参加者は部屋コードを入力して参加します。</p>
+        <p>ホストは合言葉を決めてルームを作成、参加者は同じ合言葉を入力して参加します。</p>
       </div>
+
+      <label class="field" for="room-label">
+        <span>合言葉（空欄なら自動作成）</span>
+        <input id="room-label" class="text-input" type="text" maxlength="16" placeholder="例: BABA123" autocapitalize="characters" autocomplete="off">
+      </label>
 
       <div class="actions setup-actions">
         <button id="create-room" class="btn btn-primary" type="button">ルームを作る</button>
@@ -32,9 +37,9 @@
 
       <div class="join-card">
         <label class="field" for="join-room-id">
-          <span>部屋コードで参加</span>
+          <span>合言葉で参加</span>
           <div class="join-row">
-            <input id="join-room-id" class="text-input join-code-input" type="text" maxlength="6" placeholder="例: ABCD12" autocapitalize="characters" autocomplete="off">
+            <input id="join-room-id" class="text-input join-code-input" type="text" maxlength="16" placeholder="例: BABA123" autocapitalize="characters" autocomplete="off">
             <button id="join-room" class="btn btn-ghost join-button" type="button">参加</button>
           </div>
         </label>
@@ -51,7 +56,7 @@
     <div class="room-shell">
       <div class="room-header">
         <div>
-          <p class="eyebrow">ROOM</p>
+          <p class="eyebrow">合言葉</p>
           <h2 id="room-code" class="room-code">------</h2>
         </div>
         <button id="leave-room" class="btn btn-ghost room-leave-button" type="button">退出</button>

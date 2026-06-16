@@ -133,6 +133,7 @@
       session = {
         gameId,
         roomId: payload.snapshot.roomId,
+        roomLabel: payload.snapshot.roomLabel || payload.snapshot.roomId,
         playerId: me.playerId,
         playerName: me.playerName,
         sessionToken: payload.sessionToken,
@@ -303,6 +304,7 @@
       getSession() {
         return snapshot?.me || (session ? {
           roomId: session.roomId,
+          roomLabel: session.roomLabel || session.roomId,
           playerId: session.playerId,
           playerName: session.playerName,
           isHost: session.isHost,

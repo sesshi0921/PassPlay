@@ -46,6 +46,7 @@ export interface PassPlayRoomPlayerPublic {
 
 export interface PassPlayRoomSession {
   roomId: string;
+  roomLabel?: string;
   playerId: string;
   playerName: string;
   isHost: boolean;
@@ -55,6 +56,7 @@ export interface PassPlayRoomSession {
 
 export interface PassPlayRoomSnapshot<TPublic = unknown, TPrivate = unknown> {
   roomId: string;
+  roomLabel?: string;
   gameId: string;
   revision: number;
   phase: string;
@@ -87,7 +89,7 @@ export interface PassPlayPluginApi {
     getApiBase(): Promise<string>;
     setApiBase(apiBase: string): Promise<string>;
     getSession(): Promise<PassPlayRoomSession | null>;
-    create(options: { playerName: string; transport?: PassPlayTransport }): Promise<PassPlayRoomSnapshot>;
+    create(options: { playerName: string; transport?: PassPlayTransport; roomLabel?: string }): Promise<PassPlayRoomSnapshot>;
     join(options: { roomId: string; playerName: string; transport?: PassPlayTransport }): Promise<PassPlayRoomSnapshot>;
     sync(): Promise<PassPlayRoomSnapshot>;
     start(): Promise<PassPlayRoomSnapshot>;

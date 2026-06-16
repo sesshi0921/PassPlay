@@ -25,7 +25,7 @@ export default {
 
     if (parts.length === 2 && request.method === 'POST') {
       const body = await request.json();
-      const roomId = createRoomId();
+      const roomId = normalizeRoomId(body.roomLabel || body.roomId || '');
       const stub = env.ROOMS.get(env.ROOMS.idFromName(roomId));
       return withCors(await stub.fetch(new Request(`https://room.internal/create`, {
         method: 'POST',
@@ -101,6 +101,7 @@ export class PassPlayRoom {
     const stored = await this.ctx.storage.get('room');
     this.room = stored || {
       roomId,
+      roomLabel: roomId,
       gameId: null,
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -139,6 +140,7 @@ export class PassPlayRoom {
     const playerId = createId('p');
     const sessionToken = createSecret();
     this.room.gameId = body.gameId;
+    this.room.roomLabel = body.roomLabel ? normalizeRoomLabel(body.roomLabel) : roomIdToLabel(this.room.roomId);
     this.room.phase = 'waiting';
     this.room.hostPlayerId = playerId;
     this.room.players = [{
@@ -277,12 +279,14 @@ export class PassPlayRoom {
     const player = this.playerById(playerId);
     return {
       roomId: this.room.roomId,
+      roomLabel: this.room.roomLabel || roomIdToLabel(this.room.roomId),
       gameId: this.room.gameId,
       revision: this.room.revision,
       phase: this.room.phase,
       transport,
       me: player ? {
         roomId: this.room.roomId,
+        roomLabel: this.room.roomLabel || roomIdToLabel(this.room.roomId),
         playerId: player.id,
         playerName: player.name,
         isHost: player.isHost,
@@ -304,6 +308,7 @@ export class PassPlayRoom {
       })),
       publicState: {
         roomId: this.room.roomId,
+        roomLabel: this.room.roomLabel || roomIdToLabel(this.room.roomId),
         turnPlayerId: this.room.turnPlayerId,
         targetPlayerId,
         phase: this.room.phase,
@@ -519,6 +524,23 @@ function normalizeName(name) {
   if (!trimmed) throw new Error('player name required');
   if (trimmed.length > 16) throw new Error('player name too long');
   return trimmed;
+}
+
+function normalizeRoomLabel(value) {
+  const trimmed = String(value || '').trim().toUpperCase();
+  if (!trimmed) return '';
+  const normalized = trimmed.replace(/[^A-Z0-9_-]/g, '').slice(0, 16);
+  if (!normalized) throw new Error('invalid room label');
+  return normalized;
+}
+
+function normalizeRoomId(value) {
+  const normalized = normalizeRoomLabel(value);
+  return normalized || createRoomId();
+}
+
+function roomIdToLabel(roomId) {
+  return roomId;
 }
 
 function createRoomId() {

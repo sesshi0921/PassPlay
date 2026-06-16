@@ -6,6 +6,7 @@ window.PassPlay.register(async api => {
   const state = { snapshot: null };
 
   const $playerName = document.getElementById('player-name');
+  const $roomLabel = document.getElementById('room-label');
   const $joinRoomId = document.getElementById('join-room-id');
   const $setupError = document.getElementById('setup-error');
   const $roomCode = document.getElementById('room-code');
@@ -36,6 +37,10 @@ window.PassPlay.register(async api => {
     const url = new URL(window.location.href);
     url.searchParams.set('room', roomId);
     return url.toString();
+  }
+
+  function roomLabelValue() {
+    return ($roomLabel?.value || '').trim().toUpperCase();
   }
 
   function setError(message) {
@@ -85,8 +90,8 @@ window.PassPlay.register(async api => {
     if (snapshot.phase === 'playing') show('play');
     if (isFinished) show('result');
 
-    $roomCode.textContent = snapshot.roomId;
-    $playRoomCode.textContent = snapshot.roomId;
+    $roomCode.textContent = snapshot.roomLabel || snapshot.roomId;
+    $playRoomCode.textContent = snapshot.roomLabel || snapshot.roomId;
     $inviteUrl.value = getInviteUrl(snapshot.roomId);
     $roomStatus.textContent = phaseLabel(snapshot.phase);
 
@@ -195,7 +200,8 @@ window.PassPlay.register(async api => {
     try {
       const name = playerName();
       saveName(name);
-      const snapshot = await api.room.create({ playerName: name, transport: 'http' });
+      const roomLabel = roomLabelValue();
+      const snapshot = await api.room.create({ playerName: name, transport: 'http', roomLabel });
       setSnapshot(snapshot);
     } catch (error) {
       setError(error.message);
@@ -233,7 +239,15 @@ window.PassPlay.register(async api => {
   document.getElementById('leave-after-result').addEventListener('click', leaveRoom);
 
   $playerName.value = localStorage.getItem(USERNAME_STORAGE_KEY) || '';
+  if ($roomLabel) {
+    $roomLabel.addEventListener('input', () => {
+      $roomLabel.value = $roomLabel.value.toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+    });
+  }
   $joinRoomId.value = getRoomCodeFromUrl().toUpperCase();
+  $joinRoomId.addEventListener('input', () => {
+    $joinRoomId.value = $joinRoomId.value.toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+  });
 
   api.room.onStateChange(snapshot => {
     if (snapshot) setSnapshot(snapshot);
