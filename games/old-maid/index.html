@@ -16,97 +16,104 @@
     <h1 class="title">ババ抜き</h1>
     <p class="lead">ルームを作成して、それぞれのスマホから参加します。</p>
 
-    <div class="stack">
-      <label class="field">
+    <div class="info-box setup-card">
+      <label class="field" for="player-name">
         <span>あなたの名前</span>
         <input id="player-name" class="text-input" type="text" maxlength="16" autocomplete="nickname">
       </label>
-      <div class="transport-row" role="radiogroup" aria-label="通信方式">
-        <button id="transport-http" class="transport-button is-selected" type="button" data-transport="http">HTTP</button>
-        <button id="transport-ws" class="transport-button" type="button" data-transport="ws">WebSocket</button>
-      </div>
-      <details class="advanced-settings">
-        <summary>詳細設定</summary>
-        <label class="field field-compact">
-          <span>通信先 API</span>
-          <input id="api-base" class="text-input" type="url" placeholder="https://...workers.dev/api">
-        </label>
-      </details>
-    </div>
 
-    <div class="room-actions">
-      <button id="create-room" class="btn btn-primary">ルームを作る</button>
-      <div class="join-row">
-        <input id="join-room-id" class="text-input" type="text" maxlength="6" placeholder="部屋コード">
-        <button id="join-room" class="btn btn-secondary" type="button">参加</button>
+      <div class="setup-note">
+        <p>ホストはルームを作成、参加者は部屋コードを入力して参加します。</p>
+      </div>
+
+      <div class="actions setup-actions">
+        <button id="create-room" class="btn btn-primary" type="button">ルームを作る</button>
+      </div>
+
+      <div class="join-card">
+        <label class="field" for="join-room-id">
+          <span>部屋コードで参加</span>
+          <div class="join-row">
+            <input id="join-room-id" class="text-input join-code-input" type="text" maxlength="6" placeholder="例: ABCD12" autocapitalize="characters" autocomplete="off">
+            <button id="join-room" class="btn btn-ghost join-button" type="button">参加</button>
+          </div>
+        </label>
       </div>
     </div>
 
     <p id="setup-error" class="inline-note" hidden></p>
-    <a class="btn btn-ghost" href="../../index.html" data-passplay-home>トップへ戻る</a>
+    <div class="actions setup-actions">
+      <a class="btn btn-ghost" href="../../index.html" data-passplay-home>トップへ戻る</a>
+    </div>
   </section>
 
   <section class="phase" data-phase="room" hidden>
-    <div class="room-header">
-      <div>
-        <p class="eyebrow">ROOM</p>
-        <h2 id="room-code" class="room-code">------</h2>
+    <div class="room-shell">
+      <div class="room-header">
+        <div>
+          <p class="eyebrow">ROOM</p>
+          <h2 id="room-code" class="room-code">------</h2>
+        </div>
+        <button id="leave-room" class="btn btn-ghost room-leave-button" type="button">退出</button>
       </div>
-      <button id="leave-room" class="icon-button" type="button" aria-label="退出">×</button>
-    </div>
 
-    <label class="field">
-      <span>招待URL</span>
-      <input id="invite-url" class="text-input" type="text" readonly>
-    </label>
-
-    <div class="panel">
-      <div class="panel-head">
-        <h3>参加者</h3>
-        <span id="room-status" class="badge">待機中</span>
+      <div class="info-box room-card">
+        <label class="field" for="invite-url">
+          <span>招待URL</span>
+          <input id="invite-url" class="text-input" type="text" readonly>
+        </label>
       </div>
-      <ul id="players-list" class="players-list"></ul>
-    </div>
 
-    <div class="actions sticky-actions">
-      <button id="start-game" class="btn btn-primary" type="button">ゲーム開始</button>
+      <div class="info-box room-card">
+        <div class="panel-head">
+          <h3>参加者</h3>
+          <span id="room-status" class="count-badge">待機中</span>
+        </div>
+        <ul id="players-list" class="players-list"></ul>
+      </div>
+
+      <div class="actions room-actions">
+        <button id="start-game" class="btn btn-primary" type="button">ゲーム開始</button>
+      </div>
     </div>
   </section>
 
   <section class="phase" data-phase="play" hidden>
-    <div class="panel status-panel">
+    <div class="play-shell">
+    <div class="info-box status-panel">
       <p id="turn-label" class="turn-label">同期中...</p>
       <p id="target-label" class="target-label"></p>
     </div>
 
-    <div class="panel">
+    <div class="info-box room-card">
       <div class="panel-head">
         <h3>場の状況</h3>
-        <span id="play-room-code" class="badge">------</span>
+        <span id="play-room-code" class="count-badge">------</span>
       </div>
       <ul id="public-players" class="players-list compact"></ul>
     </div>
 
-    <div class="panel" id="target-panel">
+    <div class="info-box room-card" id="target-panel">
       <div class="panel-head">
         <h3>引く相手の手札</h3>
-        <span class="badge subtle">伏せたまま</span>
+        <span class="mini-note">伏せたまま</span>
       </div>
       <div id="target-hand" class="target-hand"></div>
     </div>
 
-    <div class="panel">
+    <div class="info-box room-card">
       <div class="panel-head">
         <h3>あなたの手札</h3>
-        <span class="badge subtle">最大2枚アピール</span>
+        <span class="mini-note">最大2枚アピール</span>
       </div>
       <div id="my-hand" class="my-hand"></div>
+    </div>
     </div>
   </section>
 
   <section class="phase" data-phase="result" hidden>
     <h2 class="title">ゲーム終了</h2>
-    <div id="result-summary" class="panel result-summary"></div>
+    <div id="result-summary" class="info-box result-summary"></div>
     <div class="actions">
       <button id="leave-after-result" class="btn btn-primary" type="button">部屋を閉じる</button>
       <a class="btn btn-ghost" href="../../index.html" data-passplay-home>トップへ戻る</a>

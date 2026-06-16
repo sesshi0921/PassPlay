@@ -3,13 +3,9 @@ window.PassPlay.register(async api => {
 
   const USERNAME_STORAGE_KEY = 'passplay.multi.username';
   const phases = Array.from(document.querySelectorAll('[data-phase]'));
-  const state = {
-    snapshot: null,
-    transport: 'http',
-  };
+  const state = { snapshot: null };
 
   const $playerName = document.getElementById('player-name');
-  const $apiBase = document.getElementById('api-base');
   const $joinRoomId = document.getElementById('join-room-id');
   const $setupError = document.getElementById('setup-error');
   const $roomCode = document.getElementById('room-code');
@@ -45,12 +41,6 @@ window.PassPlay.register(async api => {
   function setError(message) {
     $setupError.hidden = !message;
     $setupError.textContent = message || '';
-  }
-
-  function syncTransportButtons() {
-    for (const button of document.querySelectorAll('[data-transport]')) {
-      button.classList.toggle('is-selected', button.dataset.transport === state.transport);
-    }
   }
 
   function playerName() {
@@ -205,10 +195,7 @@ window.PassPlay.register(async api => {
     try {
       const name = playerName();
       saveName(name);
-      if ($apiBase.value.trim()) {
-        await api.room.setApiBase($apiBase.value.trim());
-      }
-      const snapshot = await api.room.create({ playerName: name, transport: state.transport });
+      const snapshot = await api.room.create({ playerName: name, transport: 'http' });
       setSnapshot(snapshot);
     } catch (error) {
       setError(error.message);
@@ -220,11 +207,8 @@ window.PassPlay.register(async api => {
     try {
       const name = playerName();
       saveName(name);
-      if ($apiBase.value.trim()) {
-        await api.room.setApiBase($apiBase.value.trim());
-      }
       const roomId = $joinRoomId.value.trim().toUpperCase();
-      const snapshot = await api.room.join({ roomId, playerName: name, transport: state.transport });
+      const snapshot = await api.room.join({ roomId, playerName: name, transport: 'http' });
       setSnapshot(snapshot);
     } catch (error) {
       setError(error.message);
@@ -248,20 +232,8 @@ window.PassPlay.register(async api => {
   document.getElementById('leave-room').addEventListener('click', leaveRoom);
   document.getElementById('leave-after-result').addEventListener('click', leaveRoom);
 
-  for (const button of document.querySelectorAll('[data-transport]')) {
-    button.addEventListener('click', () => {
-      state.transport = button.dataset.transport;
-      syncTransportButtons();
-    });
-  }
-
   $playerName.value = localStorage.getItem(USERNAME_STORAGE_KEY) || '';
   $joinRoomId.value = getRoomCodeFromUrl().toUpperCase();
-  $apiBase.value = await api.room.getApiBase();
-  $apiBase.addEventListener('change', async () => {
-    if (!$apiBase.value.trim()) return;
-    $apiBase.value = await api.room.setApiBase($apiBase.value.trim());
-  });
 
   api.room.onStateChange(snapshot => {
     if (snapshot) setSnapshot(snapshot);
