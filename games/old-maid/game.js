@@ -38,6 +38,7 @@ window.PassPlay.register(async api => {
     removalAnim: null,
     releaseGhosts: [],
     drawAnim: null,
+    drawInsertGhost: null,
     pendingResultMoveAt: 0,
     pendingResultTimer: null,
     completedResultDelayMoveAt: 0,
@@ -493,10 +494,12 @@ window.PassPlay.register(async api => {
     $handOverlay.innerHTML = '';
     const ghosts = [];
     if (state.removalAnim) ghosts.push(state.removalAnim);
+    if (state.drawInsertGhost) ghosts.push({ ...state.drawInsertGhost, insert: true });
     ghosts.push(...state.releaseGhosts);
     if (ghosts.length === 0) return;
     const slotCount = Math.max(
       state.snapshot?.privateState?.hand?.length || 1,
+      state.drawInsertGhost?.handSize || 1,
       ...ghosts.map(ghost => (ghost.slot || 0) + 1),
     );
     layoutCardFan($handOverlay, slotCount, {
@@ -510,9 +513,9 @@ window.PassPlay.register(async api => {
 
     ghosts.forEach(ghostData => {
       const ghost = document.createElement('div');
-      ghost.className = 'hand-card removal-ghost';
+      ghost.className = `hand-card ${ghostData.insert ? 'insert-ghost' : 'removal-ghost'}`;
       ghost.style.setProperty('--card-index', String(ghostData.slot || 0));
-      ghost.innerHTML = `<span class="hand-card-name">${ghostData.cardLabel}</span><span class="hand-card-toggle">リリース</span>`;
+      ghost.innerHTML = `<span class="hand-card-name">${ghostData.cardLabel}</span><span class="hand-card-toggle">${ghostData.insert ? '入りました' : 'リリース'}</span>`;
       $handOverlay.appendChild(ghost);
     });
   }
@@ -521,10 +524,84 @@ window.PassPlay.register(async api => {
     if (!state.drawAnim) {
       $drawAnimationCard.hidden = true;
       $drawAnimationCard.textContent = '';
+      $drawAnimationCard.dataset.at = '';
       return;
     }
     $drawAnimationCard.hidden = false;
     $drawAnimationCard.textContent = state.drawAnim.cardLabel;
+    const moveAt = String(state.drawAnim.at || '');
+    if (state.drawAnim.insertSlot === undefined) {
+      $drawAnimationCard.classList.add('is-announcement');
+      if ($drawAnimationCard.dataset.at !== moveAt) {
+        $drawAnimationCard.dataset.at = moveAt;
+        restartAnimation($drawAnimationCard);
+      }
+      return;
+    }
+
+    $drawAnimationCard.classList.remove('is-announcement');
+    const from = getTargetCardPoint();
+    const to = getHandSlotPoint(state.drawAnim.insertSlot, state.drawAnim.handSize);
+    $drawAnimationCard.style.setProperty('--draw-from-x', `${from.x}px`);
+    $drawAnimationCard.style.setProperty('--draw-from-y', `${from.y}px`);
+    $drawAnimationCard.style.setProperty('--draw-to-x', `${to.x}px`);
+    $drawAnimationCard.style.setProperty('--draw-to-y', `${to.y}px`);
+    $drawAnimationCard.style.setProperty('--hand-card-width', `${to.width}px`);
+    $drawAnimationCard.style.setProperty('--hand-card-height', `${to.height}px`);
+    if ($drawAnimationCard.dataset.at !== moveAt) {
+      $drawAnimationCard.dataset.at = moveAt;
+      restartAnimation($drawAnimationCard);
+    }
+  }
+
+  function restartAnimation(element) {
+    element.style.animation = 'none';
+    void element.offsetWidth;
+    element.style.animation = '';
+  }
+
+  function getTargetCardPoint() {
+    const selectedCard = $targetHand.querySelector('.stack-card.is-selected') || $targetHand.querySelector('.stack-card');
+    const rect = selectedCard?.getBoundingClientRect();
+    if (rect?.width && rect?.height) {
+      return {
+        x: rect.left + (rect.width / 2),
+        y: rect.top + (rect.height / 2),
+      };
+    }
+    const drawerRect = $targetDrawer.getBoundingClientRect();
+    if (drawerRect?.width && drawerRect?.height) {
+      return {
+        x: drawerRect.left + (drawerRect.width / 2),
+        y: drawerRect.top + Math.min(drawerRect.height * 0.55, 170),
+      };
+    }
+    return {
+      x: window.innerWidth / 2,
+      y: window.innerHeight * 0.43,
+    };
+  }
+
+  function getHandSlotPoint(slot, handSize) {
+    layoutCardFan($myHand, handSize || 1, {
+      minWidth: 30,
+      maxWidth: 68,
+      heightRatio: 1.42,
+      minStep: 12,
+      maxStep: 46,
+      fallbackWidth: 332,
+    });
+    const rect = $myHand.getBoundingClientRect();
+    const style = getComputedStyle($myHand);
+    const width = parseFloat(style.getPropertyValue('--hand-card-width')) || 52;
+    const height = parseFloat(style.getPropertyValue('--hand-card-height')) || Math.round(width * 1.42);
+    const step = parseFloat(style.getPropertyValue('--hand-step')) || 0;
+    return {
+      x: (rect.left || ((window.innerWidth - 332) / 2)) + (slot * step) + (width / 2),
+      y: (rect.bottom || (window.innerHeight - 20)) - (height / 2),
+      width,
+      height,
+    };
   }
 
   function renderResult(snapshot) {
@@ -864,23 +941,42 @@ window.PassPlay.register(async api => {
     }
 
     if (nextMove.actorPlayerId === nextSnapshot?.me?.playerId) {
-      state.drawAnim = { cardLabel: nextMove.drawnCardLabel, at: nextMove.at };
+      const previousHand = previousSnapshot?.privateState?.hand || [];
+      const insertSlot = insertionSlotForLabel(previousHand, nextMove.drawnCardLabel);
+      state.drawAnim = {
+        cardLabel: nextMove.drawnCardLabel,
+        insertSlot,
+        handSize: previousHand.length + 1,
+        at: nextMove.at,
+      };
       window.setTimeout(() => {
         if (state.drawAnim?.at === nextMove.at) {
+          state.drawInsertGhost = {
+            cardLabel: nextMove.drawnCardLabel,
+            slot: insertSlot,
+            handSize: previousHand.length + 1,
+            at: nextMove.at,
+          };
           state.drawAnim = null;
           if (canRenderPlaySurface(nextMove.at)) renderPlay(state.snapshot);
+          window.setTimeout(() => {
+            if (state.drawInsertGhost?.at === nextMove.at) {
+              state.drawInsertGhost = null;
+              if (canRenderPlaySurface(nextMove.at)) renderPlay(state.snapshot);
+            }
+          }, 260);
         }
-      }, 900);
+      }, 820);
 
       if ((nextMove.removedLabels || []).length > 0) {
         window.setTimeout(() => {
-          state.releaseGhosts = makeReleaseGhosts(previousSnapshot?.privateState?.hand || [], nextMove.removedLabels, nextMove.drawnCardLabel, nextMove.at);
+          state.releaseGhosts = makeReleaseGhosts(previousHand, nextMove.removedLabels, nextMove.drawnCardLabel, nextMove.at);
           if (canRenderPlaySurface(nextMove.at)) renderPlay(state.snapshot);
           window.setTimeout(() => {
             state.releaseGhosts = state.releaseGhosts.filter(ghost => ghost.at !== nextMove.at);
             if (canRenderPlaySurface(nextMove.at)) renderPlay(state.snapshot);
           }, 760);
-        }, 620);
+        }, 1040);
       }
     }
   }
@@ -948,6 +1044,7 @@ window.PassPlay.register(async api => {
     state.removalAnim = null;
     state.releaseGhosts = [];
     state.drawAnim = null;
+    state.drawInsertGhost = null;
     show('setup');
   }
 
@@ -972,6 +1069,7 @@ window.PassPlay.register(async api => {
     state.removalAnim = null;
     state.releaseGhosts = [];
     state.drawAnim = null;
+    state.drawInsertGhost = null;
     show('setup');
     const reason = event.detail?.reason;
     setError(reason === 'kicked'
@@ -994,6 +1092,10 @@ window.PassPlay.register(async api => {
       clearDisconnectCountdown();
       clearPendingResult();
       state.completedResultDelayMoveAt = 0;
+      state.removalAnim = null;
+      state.releaseGhosts = [];
+      state.drawAnim = null;
+      state.drawInsertGhost = null;
       show('setup');
     }
   });

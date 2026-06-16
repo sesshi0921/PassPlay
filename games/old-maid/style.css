@@ -789,18 +789,32 @@ body {
 
 .draw-animation-card {
   position: fixed;
-  left: 50%;
-  bottom: calc(140px + var(--safe-bottom));
-  transform: translateX(-50%);
+  left: 0;
+  top: 0;
+  transform: translate(calc(var(--draw-from-x, 50vw) - 50%), calc(var(--draw-from-y, 45vh) - 50%));
   background: #fff;
   display: grid;
   place-items: center;
   font-size: 22px;
   font-weight: 900;
   box-shadow: 0 12px 24px rgba(0, 0, 0, .18);
-  animation: card-draw-in .9s ease forwards;
+  animation: card-draw-to-hand .82s cubic-bezier(.18, .82, .18, 1) forwards;
   pointer-events: none;
-  z-index: 20;
+  z-index: 90;
+  will-change: transform, opacity;
+}
+
+.draw-animation-card.is-announcement {
+  left: 50%;
+  top: 50%;
+  width: auto;
+  min-width: 180px;
+  height: auto;
+  min-height: 58px;
+  padding: 12px 18px;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  animation: card-draw-in .9s ease forwards;
 }
 
 .result-summary {
@@ -860,6 +874,25 @@ body {
   100% {
     opacity: 0;
     transform: translate(-50%, 96px) rotate(6deg) scale(.84);
+  }
+}
+
+@keyframes card-draw-to-hand {
+  0% {
+    opacity: 0;
+    transform: translate(calc(var(--draw-from-x, 50vw) - 50%), calc(var(--draw-from-y, 45vh) - 50%)) rotate(-8deg) scale(.88);
+  }
+  14% {
+    opacity: 1;
+    transform: translate(calc(var(--draw-from-x, 50vw) - 50%), calc(var(--draw-from-y, 45vh) - 58%)) rotate(-5deg) scale(1);
+  }
+  78% {
+    opacity: 1;
+    transform: translate(calc(var(--draw-to-x, 50vw) - 50%), calc(var(--draw-to-y, 82vh) - 50%)) rotate(2deg) scale(1.03);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--draw-to-x, 50vw) - 50%), calc(var(--draw-to-y, 82vh) - 50%)) rotate(0deg) scale(.98);
   }
 }
 
