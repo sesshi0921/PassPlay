@@ -14,6 +14,7 @@
   --home-control-height: 96px;
   --home-control-gap: 8px;
   --home-control-bottom: calc(var(--home-control-gap) + var(--viewport-bottom) - var(--pwa-top-compensation));
+  --home-control-top: calc(100dvh - var(--viewport-bottom) - var(--home-control-height) - var(--home-control-gap));
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --visual-bottom: 0px;
@@ -339,6 +340,7 @@ body {
   padding: 0 12px;
   overflow: hidden;
   transition:
+    top .24s cubic-bezier(.2,.75,.25,1),
     left .24s cubic-bezier(.2,.75,.25,1),
     right .24s cubic-bezier(.2,.75,.25,1),
     bottom .24s cubic-bezier(.2,.75,.25,1),
@@ -348,6 +350,7 @@ body {
   will-change: height;
 }
 .players-section.is-open {
+  top: auto;
   left: 10px;
   right: 10px;
   bottom: 0;
@@ -572,9 +575,10 @@ body {
 
 .home-control-card {
   position: fixed;
+  top: var(--home-control-top);
   left: 12px;
   right: 12px;
-  bottom: var(--home-control-bottom);
+  bottom: auto;
   width: auto;
   height: var(--home-control-height);
   min-height: var(--home-control-height);
