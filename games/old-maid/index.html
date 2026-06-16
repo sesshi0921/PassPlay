@@ -84,35 +84,48 @@
   </section>
 
   <section class="phase" data-phase="play" hidden>
-    <div class="play-shell">
-    <div class="info-box status-panel">
-      <p id="turn-label" class="turn-label">同期中...</p>
-      <p id="target-label" class="target-label"></p>
-    </div>
+    <div class="play-shell board-shell">
+      <div id="selection-popup" class="selection-popup" hidden></div>
 
-    <div class="info-box room-card">
-      <div class="panel-head">
-        <h3>場の状況</h3>
-        <span id="play-room-code" class="count-badge">------</span>
-      </div>
-      <ul id="public-players" class="players-list compact"></ul>
-    </div>
+      <div class="info-box table-shell">
+        <div class="table-head">
+          <div>
+            <p id="turn-label" class="turn-label">同期中...</p>
+            <p id="target-label" class="target-label"></p>
+          </div>
+          <span id="play-room-code" class="count-badge">------</span>
+        </div>
 
-    <div class="info-box room-card" id="target-panel">
-      <div class="panel-head">
-        <h3>引く相手の手札</h3>
-        <span class="mini-note">伏せたまま</span>
-      </div>
-      <div id="target-hand" class="target-hand"></div>
-    </div>
+        <div class="table-arena">
+          <div id="player-ring" class="player-ring"></div>
 
-    <div class="info-box room-card">
-      <div class="panel-head">
-        <h3>あなたの手札</h3>
-        <span class="mini-note">最大2枚アピール</span>
+          <div class="discard-zone">
+            <p class="table-zone-label">そろった札</p>
+            <div id="discard-pile" class="discard-pile"></div>
+          </div>
+        </div>
       </div>
-      <div id="my-hand" class="my-hand"></div>
-    </div>
+
+      <div class="info-box target-drawer" id="target-panel">
+        <div class="panel-head">
+          <h3>引く相手の手札</h3>
+          <span class="mini-note">ダブルタップで取る</span>
+        </div>
+        <div id="target-hand" class="target-stack"></div>
+      </div>
+
+      <div class="hand-dock">
+        <div class="hand-dock-head">
+          <h3>あなたの手札</h3>
+          <span class="mini-note">最大2枚アピール</span>
+        </div>
+        <div class="hand-dock-body">
+          <div id="hand-overlay" class="hand-overlay"></div>
+          <div id="my-hand" class="my-hand fan-hand"></div>
+        </div>
+      </div>
+
+      <div id="draw-animation-card" class="draw-animation-card" hidden></div>
     </div>
   </section>
 

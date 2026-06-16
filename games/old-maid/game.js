@@ -18,7 +18,14 @@ window.PassPlay.register(async api => {
 
   const USERNAME_STORAGE_KEY = 'passplay.multi.username';
   const phases = Array.from(document.querySelectorAll('[data-phase]'));
-  const state = { snapshot: null };
+  const state = {
+    snapshot: null,
+    previousSnapshot: null,
+    selectedTargetSlot: null,
+    lastTargetTapAt: 0,
+    removalAnim: null,
+    drawAnim: null,
+  };
 
   const $playerName = document.getElementById('player-name');
   const $roomLabel = document.getElementById('room-label');
@@ -30,11 +37,16 @@ window.PassPlay.register(async api => {
   const $copyInvite = document.getElementById('copy-invite');
   const $roomStatus = document.getElementById('room-status');
   const $playersList = document.getElementById('players-list');
-  const $publicPlayers = document.getElementById('public-players');
+  const $playerRing = document.getElementById('player-ring');
   const $turnLabel = document.getElementById('turn-label');
   const $targetLabel = document.getElementById('target-label');
+  const $targetPanel = document.getElementById('target-panel');
   const $targetHand = document.getElementById('target-hand');
   const $myHand = document.getElementById('my-hand');
+  const $handOverlay = document.getElementById('hand-overlay');
+  const $discardPile = document.getElementById('discard-pile');
+  const $selectionPopup = document.getElementById('selection-popup');
+  const $drawAnimationCard = document.getElementById('draw-animation-card');
   const $resultSummary = document.getElementById('result-summary');
 
   function show(phase) {
@@ -98,6 +110,13 @@ window.PassPlay.register(async api => {
     localStorage.setItem(USERNAME_STORAGE_KEY, value);
   }
 
+  function makePill(text, extraClass = '') {
+    const span = document.createElement('span');
+    span.className = `pill ${extraClass}`.trim();
+    span.textContent = text;
+    return span;
+  }
+
   function renderPlayers(target, players, options = {}) {
     const showCardCount = !!options.showCardCount;
     target.innerHTML = '';
@@ -117,13 +136,6 @@ window.PassPlay.register(async api => {
     }
   }
 
-  function makePill(text, extraClass = '') {
-    const span = document.createElement('span');
-    span.className = `pill ${extraClass}`.trim();
-    span.textContent = text;
-    return span;
-  }
-
   function renderRoom(snapshot) {
     const isWaiting = snapshot.phase === 'waiting';
     const isFinished = snapshot.phase === 'finished';
@@ -138,7 +150,6 @@ window.PassPlay.register(async api => {
 
     const showCardCount = snapshot.phase !== 'waiting';
     renderPlayers($playersList, snapshot.players, { showCardCount });
-    renderPlayers($publicPlayers, snapshot.players, { showCardCount });
 
     renderPlay(snapshot);
     renderResult(snapshot);
@@ -148,42 +159,171 @@ window.PassPlay.register(async api => {
 
   function renderPlay(snapshot) {
     if (!snapshot.privateState) return;
+
     const me = snapshot.me;
     const publicState = snapshot.publicState || {};
     const targetPlayer = snapshot.players.find(player => player.id === publicState.targetPlayerId) || null;
     const isMyTurn = publicState.turnPlayerId === me?.playerId;
-    $turnLabel.textContent = isMyTurn ? 'あなたのターン' : `${nameById(snapshot, publicState.turnPlayerId)} のターン`;
-    $targetLabel.textContent = targetPlayer ? `${targetPlayer.name} から1枚引きます` : '';
+    const selectingMine = publicState.targetPlayerId === me?.playerId
+      && publicState.turnPlayerId
+      && publicState.turnPlayerId !== me?.playerId;
 
-    $targetHand.innerHTML = '';
-    const previews = targetPlayer?.handPreview || [];
-    for (const preview of previews) {
-      const button = document.createElement('button');
-      button.className = 'card-button';
-      if (preview.appealing) button.classList.add('appealing');
-      button.disabled = !snapshot.privateState.canDraw;
-      button.type = 'button';
-      button.addEventListener('click', () => act('draw-card', { slot: preview.slot }));
-      $targetHand.appendChild(button);
+    $turnLabel.textContent = isMyTurn ? 'あなたのターン' : `${nameById(snapshot, publicState.turnPlayerId)} のターン`;
+    $targetLabel.textContent = isMyTurn && targetPlayer
+      ? `${targetPlayer.name} の手札をダブルタップして引きます`
+      : selectingMine
+        ? `${nameById(snapshot, publicState.turnPlayerId)} があなたのカードを選んでいます...`
+        : targetPlayer
+          ? `${targetPlayer.name} から1枚引きます`
+          : '';
+
+    $selectionPopup.hidden = !selectingMine;
+    $selectionPopup.textContent = selectingMine
+      ? `${nameById(snapshot, publicState.turnPlayerId)} があなたのカードを選んでいます...`
+      : '';
+
+    renderRing(snapshot, me?.playerId);
+    renderDiscardPile(publicState.discardPile || []);
+    renderTargetStack(snapshot, targetPlayer);
+    renderMyHand(snapshot.privateState.hand || []);
+    renderHandOverlay();
+    renderDrawAnimation();
+  }
+
+  function renderRing(snapshot, myPlayerId) {
+    const publicState = snapshot.publicState || {};
+    const order = (publicState.turnOrder && publicState.turnOrder.length
+      ? publicState.turnOrder
+      : snapshot.players.map(player => player.id))
+      .filter(playerId => playerId !== myPlayerId);
+    const ringPlayers = order
+      .map(playerId => snapshot.players.find(player => player.id === playerId))
+      .filter(Boolean);
+
+    $playerRing.innerHTML = '';
+    const total = ringPlayers.length;
+    ringPlayers.forEach((player, index) => {
+      const angle = total <= 1 ? 270 : 210 + (120 * index) / Math.max(1, total - 1);
+      const chip = document.createElement('div');
+      chip.className = 'table-player';
+      chip.style.setProperty('--angle', `${angle}deg`);
+      if (player.id === publicState.turnPlayerId) chip.classList.add('is-turn');
+      if (player.id === publicState.targetPlayerId) chip.classList.add('is-target');
+      if (player.isOut) chip.classList.add('is-out');
+
+      const icon = document.createElement('div');
+      icon.className = 'table-player-icon';
+      icon.textContent = '👤';
+
+      const name = document.createElement('div');
+      name.className = 'table-player-name';
+      name.textContent = truncateName(player.name, 10);
+
+      const meta = document.createElement('div');
+      meta.className = 'table-player-meta';
+      if (player.isHost) meta.appendChild(makePill('HOST'));
+      if (player.cardCount !== undefined) meta.appendChild(makePill(`${player.cardCount}枚`));
+
+      chip.appendChild(icon);
+      chip.appendChild(name);
+      chip.appendChild(meta);
+      $playerRing.appendChild(chip);
+    });
+  }
+
+  function renderDiscardPile(discardPile) {
+    $discardPile.innerHTML = '';
+    const latest = discardPile.slice(-3).reverse();
+    if (latest.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'discard-placeholder';
+      empty.textContent = 'まだありません';
+      $discardPile.appendChild(empty);
+      return;
     }
 
+    latest.forEach((entry, groupIndex) => {
+      const group = document.createElement('div');
+      group.className = 'discard-group';
+      group.style.setProperty('--group-index', String(groupIndex));
+      (entry.labels || []).slice(0, 4).forEach((label, cardIndex) => {
+        const card = document.createElement('div');
+        card.className = 'discard-card';
+        card.style.setProperty('--discard-index', String(cardIndex));
+        card.textContent = label;
+        group.appendChild(card);
+      });
+      $discardPile.appendChild(group);
+    });
+  }
+
+  function renderTargetStack(snapshot, targetPlayer) {
+    const canDraw = !!snapshot.privateState?.canDraw;
+    $targetPanel.hidden = !targetPlayer;
+    $targetHand.innerHTML = '';
+    if (!targetPlayer) return;
+
+    (targetPlayer.handPreview || []).forEach((preview, index) => {
+      const button = document.createElement('button');
+      button.className = 'stack-card';
+      button.type = 'button';
+      button.style.setProperty('--stack-index', String(index));
+      if (preview.appealing) button.classList.add('appealing');
+      if (state.selectedTargetSlot === preview.slot) button.classList.add('is-selected');
+      button.disabled = !canDraw;
+      button.addEventListener('click', () => handleTargetTap(preview.slot));
+      $targetHand.appendChild(button);
+    });
+
+    if (!canDraw) {
+      state.selectedTargetSlot = null;
+      state.lastTargetTapAt = 0;
+    }
+  }
+
+  function renderMyHand(hand) {
     $myHand.innerHTML = '';
-    for (const card of snapshot.privateState.hand || []) {
+    hand.forEach((card, index) => {
       const button = document.createElement('button');
       button.className = 'hand-card';
+      button.style.setProperty('--card-index', String(index));
       if (card.appealing) button.classList.add('appealing');
       button.type = 'button';
-      button.addEventListener('click', () => toggleAppeal(snapshot, card.cardId));
+      button.addEventListener('click', () => toggleAppeal(state.snapshot, card.cardId));
+
       const label = document.createElement('span');
       label.className = 'hand-card-name';
       label.textContent = card.label;
+
       const note = document.createElement('span');
       note.className = 'hand-card-toggle';
       note.textContent = card.appealing ? 'アピール中' : 'タップでアピール';
+
       button.appendChild(label);
       button.appendChild(note);
       $myHand.appendChild(button);
+    });
+  }
+
+  function renderHandOverlay() {
+    $handOverlay.innerHTML = '';
+    if (!state.removalAnim) return;
+
+    const ghost = document.createElement('div');
+    ghost.className = 'hand-card removal-ghost';
+    ghost.style.setProperty('--card-index', String(state.removalAnim.slot));
+    ghost.innerHTML = `<span class="hand-card-name">${state.removalAnim.cardLabel}</span><span class="hand-card-toggle">選ばれました</span>`;
+    $handOverlay.appendChild(ghost);
+  }
+
+  function renderDrawAnimation() {
+    if (!state.drawAnim) {
+      $drawAnimationCard.hidden = true;
+      $drawAnimationCard.textContent = '';
+      return;
     }
+    $drawAnimationCard.hidden = false;
+    $drawAnimationCard.textContent = state.drawAnim.cardLabel;
   }
 
   function renderResult(snapshot) {
@@ -215,6 +355,23 @@ window.PassPlay.register(async api => {
     return snapshot.players.find(player => player.id === playerId)?.name || '不明';
   }
 
+  function truncateName(name, limit) {
+    return name.length > limit ? `${name.slice(0, limit)}...` : name;
+  }
+
+  function handleTargetTap(slot) {
+    const now = Date.now();
+    if (state.selectedTargetSlot === slot && now - state.lastTargetTapAt < 360) {
+      state.selectedTargetSlot = null;
+      state.lastTargetTapAt = 0;
+      act('draw-card', { slot });
+      return;
+    }
+    state.selectedTargetSlot = slot;
+    state.lastTargetTapAt = now;
+    if (state.snapshot?.phase === 'playing') renderPlay(state.snapshot);
+  }
+
   async function act(type, payload) {
     try {
       const snapshot = await api.room.action({ type, payload });
@@ -232,7 +389,39 @@ window.PassPlay.register(async api => {
     await act('set-appeal', { cardIds: next });
   }
 
+  function primeAnimations(previousSnapshot, nextSnapshot) {
+    const previousMoveAt = previousSnapshot?.publicState?.lastMove?.at || 0;
+    const nextMove = nextSnapshot?.publicState?.lastMove;
+    if (!nextMove || nextMove.at === previousMoveAt) return;
+
+    if (nextMove.targetPlayerId === nextSnapshot?.me?.playerId) {
+      const previousHand = previousSnapshot?.privateState?.hand || [];
+      const removedCard = previousHand[nextMove.targetSlot];
+      if (removedCard) {
+        state.removalAnim = { slot: nextMove.targetSlot, cardLabel: removedCard.label, at: nextMove.at };
+        window.setTimeout(() => {
+          if (state.removalAnim?.at === nextMove.at) {
+            state.removalAnim = null;
+            if (state.snapshot?.phase === 'playing') renderPlay(state.snapshot);
+          }
+        }, 720);
+      }
+    }
+
+    if (nextMove.actorPlayerId === nextSnapshot?.me?.playerId) {
+      state.drawAnim = { cardLabel: nextMove.drawnCardLabel, at: nextMove.at };
+      window.setTimeout(() => {
+        if (state.drawAnim?.at === nextMove.at) {
+          state.drawAnim = null;
+          if (state.snapshot?.phase === 'playing') renderPlay(state.snapshot);
+        }
+      }, 900);
+    }
+  }
+
   function setSnapshot(snapshot) {
+    primeAnimations(state.snapshot, snapshot);
+    state.previousSnapshot = state.snapshot;
     state.snapshot = snapshot;
     renderRoom(snapshot);
   }
@@ -274,6 +463,11 @@ window.PassPlay.register(async api => {
   async function leaveRoom() {
     await api.room.leave();
     state.snapshot = null;
+    state.previousSnapshot = null;
+    state.selectedTargetSlot = null;
+    state.lastTargetTapAt = 0;
+    state.removalAnim = null;
+    state.drawAnim = null;
     show('setup');
   }
 

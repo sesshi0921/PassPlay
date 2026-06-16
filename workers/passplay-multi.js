@@ -139,6 +139,8 @@ export class PassPlayRoom {
       players: [],
       turnOrder: [],
       turnPlayerId: null,
+      discardPile: [],
+      lastMove: null,
       lastEvent: null,
       result: null,
     };
@@ -185,6 +187,8 @@ export class PassPlayRoom {
     }];
     this.room.turnOrder = [];
     this.room.turnPlayerId = null;
+    this.room.discardPile = [];
+    this.room.lastMove = null;
     this.bump('room-created');
     await this.persist();
     return json({
@@ -339,6 +343,9 @@ export class PassPlayRoom {
         roomLabel: this.room.roomLabel || roomIdToLabel(this.room.roomId),
         turnPlayerId: this.room.turnPlayerId,
         targetPlayerId,
+        turnOrder: this.room.turnOrder.slice(),
+        discardPile: (this.room.discardPile || []).slice(-12),
+        lastMove: this.room.lastMove || null,
         phase: this.room.phase,
         result: this.room.result,
         canStart: this.room.phase === 'waiting' && this.room.players.length >= GAME_DEFINITIONS[this.room.gameId]?.minPlayers,
@@ -443,6 +450,8 @@ function startOldMaid(room) {
   room.turnPlayerId = order[0];
   room.phase = 'playing';
   room.result = null;
+  room.discardPile = [];
+  room.lastMove = null;
   for (const player of room.players) {
     player.hand = [];
     player.appeal = [];
@@ -455,11 +464,15 @@ function startOldMaid(room) {
     owner.hand.push(card);
   });
   for (const player of room.players) {
-    player.hand = removePairs(player.hand);
+    const resolved = resolveHand(player.hand);
+    player.hand = resolved.hand;
+    pushDiscardPile(room, player.id, resolved.removed, 'deal');
   }
   assignFinishedPlayers(room);
   maybeFinishRoom(room);
-  room.turnPlayerId = getNextTurnPlayer(room, room.turnPlayerId);
+  if (room.turnPlayerId && findPlayer(room, room.turnPlayerId).isOut) {
+    room.turnPlayerId = getNextTurnPlayer(room, room.turnPlayerId);
+  }
 }
 
 function applyOldMaidDraw(room, playerId, slot) {
@@ -476,8 +489,20 @@ function applyOldMaidDraw(room, playerId, slot) {
   const [drawnCard] = target.hand.splice(slot, 1);
   target.appeal = target.appeal.filter(cardId => cardId !== drawnCard);
   actor.hand.push(drawnCard);
-  actor.hand = removePairs(actor.hand);
+  sortHand(target.hand);
+  const resolved = resolveHand(actor.hand);
+  actor.hand = resolved.hand;
   actor.appeal = actor.appeal.filter(cardId => actor.hand.includes(cardId)).slice(0, 2);
+  pushDiscardPile(room, actor.id, resolved.removed, 'draw');
+  room.lastMove = {
+    actorPlayerId: actor.id,
+    targetPlayerId: target.id,
+    targetSlot: slot,
+    drawnCardId: drawnCard,
+    drawnCardLabel: cardLabel(drawnCard),
+    removedLabels: resolved.removed.map(cardLabel),
+    at: Date.now(),
+  };
 
   assignFinishedPlayers(room);
   if (maybeFinishRoom(room)) return;
@@ -542,7 +567,7 @@ function findPlayer(room, playerId) {
 }
 
 function createDeck() {
-  const suits = ['S', 'H', 'D', 'C'];
+  const suits = ['S', 'C', 'H', 'D'];
   const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
   const deck = [];
   for (const suit of suits) {
@@ -554,21 +579,32 @@ function createDeck() {
   return deck;
 }
 
-function removePairs(hand) {
-  const counts = new Map();
-  const kept = new Map();
-  for (const cardId of hand) {
+function resolveHand(hand) {
+  const sorted = sortHand(hand.slice());
+  const groups = new Map();
+  for (const cardId of sorted) {
     const rank = cardId.split('-')[0];
-    counts.set(rank, (counts.get(rank) || 0) + 1);
+    const cards = groups.get(rank) || [];
+    cards.push(cardId);
+    groups.set(rank, cards);
   }
-  return hand.filter(cardId => {
+
+  const kept = [];
+  const removed = [];
+  for (const cardId of sorted) {
     const rank = cardId.split('-')[0];
-    if (rank === 'JOKER') return true;
-    if ((counts.get(rank) || 0) % 2 === 0) return false;
-    if (kept.get(rank)) return false;
-    kept.set(rank, true);
-    return true;
-  });
+    const cards = groups.get(rank) || [];
+    if (rank === 'JOKER') {
+      kept.push(cardId);
+      continue;
+    }
+    if (cards.length % 2 === 1 && cards[0] === cardId) {
+      kept.push(cardId);
+      continue;
+    }
+    removed.push(cardId);
+  }
+  return { hand: sortHand(kept), removed };
 }
 
 function cardLabel(cardId) {
@@ -576,6 +612,44 @@ function cardLabel(cardId) {
   if (rank === 'JOKER') return 'JOKER';
   const symbols = { S: '♠', H: '♥', D: '♦', C: '♣' };
   return `${rank}${symbols[suit] || ''}`;
+}
+
+function sortHand(hand) {
+  hand.sort((left, right) => compareCardIds(left, right));
+  return hand;
+}
+
+function compareCardIds(left, right) {
+  const leftParts = left.split('-');
+  const rightParts = right.split('-');
+  const rankGap = rankWeight(leftParts[0]) - rankWeight(rightParts[0]);
+  if (rankGap !== 0) return rankGap;
+  const suitGap = suitWeight(leftParts[1]) - suitWeight(rightParts[1]);
+  if (suitGap !== 0) return suitGap;
+  return left.localeCompare(right);
+}
+
+function rankWeight(rank) {
+  const order = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'JOKER'];
+  const index = order.indexOf(rank);
+  return index === -1 ? 999 : index;
+}
+
+function suitWeight(suit) {
+  const order = { S: 0, C: 1, H: 2, D: 3, X: 4 };
+  return order[suit] ?? 99;
+}
+
+function pushDiscardPile(room, ownerPlayerId, removedCards, reason) {
+  if (!removedCards || removedCards.length === 0) return;
+  room.discardPile = room.discardPile || [];
+  room.discardPile.push({
+    ownerPlayerId,
+    reason,
+    labels: removedCards.map(cardLabel),
+    at: Date.now(),
+  });
+  room.discardPile = room.discardPile.slice(-12);
 }
 
 function validateGame(gameId) {
