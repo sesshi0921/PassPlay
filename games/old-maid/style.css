@@ -11,6 +11,10 @@
   gap: 14px;
 }
 
+.phase[hidden] {
+  display: none;
+}
+
 .title {
   margin: 0;
   font-size: 28px;
